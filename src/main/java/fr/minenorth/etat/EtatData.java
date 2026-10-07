@@ -30,6 +30,9 @@ public class EtatData extends SavedData {
     public long mayorUntil;
     public final Map<UUID, String> agents = new LinkedHashMap<>();
 
+    /** Pouvoirs du maire suspendus par un admin (il garde son titre mais ses commandes sont bloquées). */
+    public boolean mayorLocked;
+
     public boolean electionOpen;
     public long electionEnd;
     public final Map<UUID, String> candidates = new LinkedHashMap<>();
@@ -71,6 +74,7 @@ public class EtatData extends SavedData {
             CompoundTag c = (CompoundTag) t;
             d.agents.put(c.getUUID("id"), c.getString("title"));
         }
+        d.mayorLocked = tag.getBoolean("mayorLocked");
         d.electionOpen = tag.getBoolean("electionOpen");
         d.electionEnd = tag.getLong("electionEnd");
         for (Tag t : tag.getList("candidates", Tag.TAG_COMPOUND)) {
@@ -105,6 +109,7 @@ public class EtatData extends SavedData {
         ListTag al = new ListTag();
         agents.forEach((id, title) -> { CompoundTag c = new CompoundTag(); c.putUUID("id", id); c.putString("title", title); al.add(c); });
         tag.put("agents", al);
+        tag.putBoolean("mayorLocked", mayorLocked);
         tag.putBoolean("electionOpen", electionOpen);
         tag.putLong("electionEnd", electionEnd);
         ListTag cl = new ListTag();

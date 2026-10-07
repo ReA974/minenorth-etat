@@ -50,7 +50,7 @@ public final class EtatCommands {
     }
 
     private static boolean mayorOrOp(CommandSourceStack s) {
-        return s.hasPermission(2) || (s.getEntity() instanceof ServerPlayer p && Etat.isMayor(p));
+        return s.hasPermission(2) || (s.getEntity() instanceof ServerPlayer p && Etat.isMayor(p) && !EtatData.get(s.getServer()).mayorLocked);
     }
 
     @SubscribeEvent
@@ -107,6 +107,7 @@ public final class EtatCommands {
                     if (data.mayor == null) src.sendSystemMessage(Component.literal("§7Maire : §fpersonne"));
                     else src.sendSystemMessage(Component.literal("§7Maire : §f" + MineNorth.displayName(s, data.mayor)
                             + (data.mayorUntil > 0 ? " §7(mandat : encore " + ElectionService.duration(data.mayorUntil - System.currentTimeMillis()) + ")" : "")));
+                    if (data.mayorLocked) src.sendSystemMessage(Component.literal("§cPouvoirs du maire suspendus par un administrateur."));
                     src.sendSystemMessage(Component.literal("§7Impôt sur les achats : §f" + Etat.percent(Etat.taxPercent(s))));
                     src.sendSystemMessage(Component.literal("§7Élection : §f" + (data.electionOpen
                             ? "en cours, fin dans " + ElectionService.duration(data.electionEnd - System.currentTimeMillis()) : "aucune")));

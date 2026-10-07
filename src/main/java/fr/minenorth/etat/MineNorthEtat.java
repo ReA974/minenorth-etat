@@ -12,7 +12,14 @@ public class MineNorthEtat {
 
     public MineNorthEtat() {
         EtatConfig.load();
+        fr.minenorth.etat.block.ModBlocks.register(net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext.get().getModEventBus());
+        fr.minenorth.etat.network.EtatNetwork.register();
         MinecraftForge.EVENT_BUS.register(this);
+    }
+
+    @SubscribeEvent
+    public void logout(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) {
+        fr.minenorth.etat.network.EtatNetwork.forget(e.getEntity().getUUID());
     }
 
     /**

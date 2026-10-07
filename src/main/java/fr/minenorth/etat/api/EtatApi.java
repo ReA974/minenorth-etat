@@ -55,6 +55,91 @@ public final class EtatApi {
         return id == null ? "Il n'y a plus de maire." : name + " est maintenant maire.";
     }
 
+    // ------------------------------------------------------------------ supervision admin
+
+    /** Pouvoirs du maire suspendus ? */
+    public static boolean mayorLocked(MinecraftServer s) { return EtatData.get(s).mayorLocked; }
+
+    public static String setMayorLocked(MinecraftServer s, boolean locked) {
+        EtatData d = EtatData.get(s);
+        d.mayorLocked = locked;
+        d.setDirty();
+        d.log(locked ? "Pouvoirs du maire suspendus (admin)" : "Pouvoirs du maire rétablis (admin)");
+        return locked ? "Pouvoirs du maire suspendus." : "Pouvoirs du maire rétablis.";
+    }
+
+    /** Salaires : une ligne par poste, "clé|libellé|euros|défini en jeu (1/0)". */
+    public static String[] salaryRows(MinecraftServer s) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        EtatData d = EtatData.get(s);
+        java.util.List<String> pg = fr.minenorth.api.MineNorth.police().grades();
+        for (int i = 0; i < pg.size(); i++) out.add(row(s, d, "police", i, "Police · " + pg.get(i)));
+        String[] sg = fr.minenorth.etat.SalaryService.secoursGrades();
+        for (int i = 0; i < sg.length; i++) out.add(row(s, d, "pompier", i, "Pompiers · " + sg[i]));
+        out.add(row(s, d, "agent", -1, "Agents municipaux"));
+        return out.toArray(new String[0]);
+    }
+
+    private static String row(MinecraftServer s, EtatData d, String kind, int grade, String label) {
+        String key = Etat.salaryKey(kind, grade);
+        return key + "|" + label + "|" + Etat.salaryEuros(s, kind, grade) + "|" + (d.salaryOverride.containsKey(key) ? 1 : 0);
+    }
+
+    /** Fixe un salaire (admin : pas de plafond). key : "police:0", "pompier:1", "agent". */
+    public static String setSalary(MinecraftServer s, String key, double euros) {
+        if (euros < 0) return "Salaire invalide.";
+        EtatData d = EtatData.get(s);
+        d.salaryOverride.put(key, euros);
+        d.log("Salaire " + key + " fixé à " + Etat.money(Etat.cents(euros)) + " (admin)");
+        d.setDirty();
+        return "Salaire fixé à " + Etat.money(Etat.cents(euros)) + " par paie.";
+    }
+
+    /** Revient au salaire de la config. */
+    public static String resetSalary(MinecraftServer s, String key) {
+        EtatData d = EtatData.get(s);
+        d.salaryOverride.remove(key);
+        d.log("Salaire " + key + " remis à la config (admin)");
+        d.setDirty();
+        return "Salaire remis à la valeur de la config.";
+    }
+
+    /** Agents municipaux : "uuid|nom|titre". */
+    public static String[] agentRows(MinecraftServer s) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (java.util.Map.Entry<UUID, String> en : EtatData.get(s).agents.entrySet())
+            out.add(en.getKey() + "|" + fr.minenorth.api.MineNorth.displayName(s, en.getKey()) + "|" + en.getValue());
+        return out.toArray(new String[0]);
+    }
+
+    public static String revokeAgent(MinecraftServer s, UUID id) {
+        EtatData d = EtatData.get(s);
+        if (d.agents.remove(id) == null) return null;
+        String name = fr.minenorth.api.MineNorth.displayName(s, id);
+        d.log(name + " révoqué (admin)");
+        d.setDirty();
+        net.minecraft.server.level.ServerPlayer on = s.getPlayerList().getPlayer(id);
+        if (on != null) on.sendSystemMessage(net.minecraft.network.chat.Component.literal("§e[Mairie] Vous n'êtes plus agent municipal."));
+        return name;
+    }
+
+    /** Dernières opérations du trésor, la plus récente d'abord : "horodatage|texte". */
+    public static String[] ledger(MinecraftServer s) {
+        java.util.List<String> l = EtatData.get(s).ledger;
+        String[] out = new String[l.size()];
+        for (int i = 0; i < out.length; i++) out[i] = l.get(l.size() - 1 - i);
+        return out;
+    }
+
+    /** Ajoute (cents > 0) ou retire (cents < 0) de l'argent au trésor. */
+    public static String adjustTreasury(MinecraftServer s, long cents, String who) {
+        EtatData d = EtatData.get(s);
+        d.balance += cents;
+        d.log((cents >= 0 ? "Ajout de " : "Retrait de ") + Etat.money(Math.abs(cents)) + " (admin " + who + ")");
+        d.setDirty();
+        return "Solde du trésor : " + Etat.money(d.balance) + ".";
+    }
+
     public static boolean electionOpen(MinecraftServer s) { return EtatData.get(s).electionOpen; }
 
     public static int agentCount(MinecraftServer s) { return EtatData.get(s).agents.size(); }

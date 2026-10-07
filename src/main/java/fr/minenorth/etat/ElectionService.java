@@ -92,6 +92,7 @@ public final class ElectionService {
         int days = EtatConfig.get().mandat_jours;
         d.mayorUntil = id == null || days <= 0 ? 0 : System.currentTimeMillis() + days * 86_400_000L;
         d.agents.clear();
+        d.mayorLocked = false;
         d.setDirty();
     }
 
@@ -124,6 +125,19 @@ public final class ElectionService {
         if (d.votes.containsKey(p.getUUID())) return "Vous avez déjà voté.";
         UUID target = find(d, who);
         if (target == null) return "Candidat introuvable (voir /election liste).";
+        d.votes.put(p.getUUID(), target);
+        d.setDirty();
+        return null;
+    }
+
+    /** Vote pour un candidat connu par son identifiant (écran du bureau de vote). */
+    public static String voteFor(ServerPlayer p, UUID target) {
+        MinecraftServer s = p.server;
+        EtatData d = EtatData.get(s);
+        if (!d.electionOpen) return "Aucune élection en cours.";
+        if (!Etat.citizen(s, p.getUUID())) return "Il faut une carte d'identité pour voter.";
+        if (d.votes.containsKey(p.getUUID())) return "Vous avez déjà voté.";
+        if (!d.candidates.containsKey(target)) return "Ce candidat n'existe plus.";
         d.votes.put(p.getUUID(), target);
         d.setDirty();
         return null;
