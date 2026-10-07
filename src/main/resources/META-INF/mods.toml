@@ -1,0 +1,27 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+[[mods]]
+modId="minenorthetat"
+version="1.0.0"
+displayName="MineNorth État"
+authors="MineNorth RP"
+description='''Gestion de l'État MineNorth RP : trésor alimenté par un pourcentage des achats, salaires police / pompiers, élections et maire.'''
+[[dependencies.minenorthetat]]
+modId="forge"
+mandatory=true
+versionRange="[47,)"
+ordering="NONE"
+side="BOTH"
+[[dependencies.minenorthetat]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.20.1,1.21)"
+ordering="NONE"
+side="BOTH"
+[[dependencies.minenorthetat]]
+modId="minenorthapi"
+mandatory=true
+versionRange="[1.0.0,2)"
+ordering="AFTER"
+side="BOTH"
