@@ -7,6 +7,12 @@ import net.minecraft.client.Minecraft;
 public final class ClientNetworkHandler {
     private ClientNetworkHandler() {}
 
+    public static void tablet(EtatNetwork.TabletState p) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen instanceof TabletScreen screen) screen.update(p);
+        else mc.setScreen(new TabletScreen(p));
+    }
+
     public static void state(EtatNetwork.StatePacket p) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen instanceof BallotScreen screen) screen.update(p);

@@ -140,6 +140,11 @@ public final class EtatApi {
         return "Solde du trésor : " + Etat.money(d.balance) + ".";
     }
 
+    /** Vrai pour le maire et les agents municipaux (le mod Portes l'appelle par réflexion : ne pas changer le nom ni les paramètres). */
+    public static boolean isMairieStaff(net.minecraft.server.level.ServerPlayer p) {
+        return Etat.isMayor(p) || EtatData.get(p.server).agents.containsKey(p.getUUID());
+    }
+
     public static boolean electionOpen(MinecraftServer s) { return EtatData.get(s).electionOpen; }
 
     public static int agentCount(MinecraftServer s) { return EtatData.get(s).agents.size(); }

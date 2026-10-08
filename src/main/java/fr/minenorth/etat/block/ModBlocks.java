@@ -24,10 +24,15 @@ public final class ModBlocks {
     public static final RegistryObject<Item> BALLOT_ITEM = ITEMS.register("bureau_de_vote",
             () -> new BlockItem(BALLOT.get(), new Item.Properties()));
 
+    public static final RegistryObject<Item> TABLET = ITEMS.register("tablette_mairie", fr.minenorth.etat.item.TabletItem::new);
+
     public static final RegistryObject<CreativeModeTab> TAB = TABS.register("etat", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.minenorthetat"))
-            .icon(() -> new ItemStack(BALLOT_ITEM.get()))
-            .displayItems((params, out) -> out.accept(BALLOT_ITEM.get()))
+            .icon(() -> new ItemStack(TABLET.get()))
+            .displayItems((params, out) -> {
+                out.accept(TABLET.get());
+                out.accept(BALLOT_ITEM.get());
+            })
             .build());
 
     public static void register(IEventBus modBus) {

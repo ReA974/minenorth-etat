@@ -39,6 +39,8 @@ public final class EtatNetwork {
     public static void register() {
         CHANNEL.registerMessage(id++, StatePacket.class, StatePacket::encode, StatePacket::decode, StatePacket::handle);
         CHANNEL.registerMessage(id++, ActionPacket.class, ActionPacket::encode, ActionPacket::decode, ActionPacket::handle);
+        CHANNEL.registerMessage(id++, TabletState.class, TabletState::encode, TabletState::decode, TabletState::handle);
+        CHANNEL.registerMessage(id++, TabletAction.class, TabletAction::encode, TabletAction::decode, TabletAction::handle);
     }
 
     /** Ouvre l'écran du bureau de vote chez ce joueur. */
@@ -91,6 +93,43 @@ public final class EtatNetwork {
             c.get().enqueueWork(() -> {
                 ServerPlayer sender = c.get().getSender();
                 if (sender != null) EtatNetwork.handle(sender, p);
+            });
+            c.get().setPacketHandled(true);
+        }
+    }
+
+    /** État de la tablette de la mairie (serveur -> client). Les listes sont des lignes "a|b|c". */
+    public record TabletState(int role, boolean locked, long balance, double tax, double taxMax, String mayor, boolean electionOpen,
+                              int secondsLeft, int candidates, int votes, List<String> salaries, List<String> agents,
+                              List<String> ledger, String message, boolean ok) {
+        static void encode(TabletState p, FriendlyByteBuf b) {
+            b.writeVarInt(p.role); b.writeBoolean(p.locked); b.writeLong(p.balance); b.writeDouble(p.tax); b.writeDouble(p.taxMax);
+            b.writeUtf(p.mayor); b.writeBoolean(p.electionOpen); b.writeVarInt(p.secondsLeft); b.writeVarInt(p.candidates); b.writeVarInt(p.votes);
+            b.writeCollection(p.salaries, FriendlyByteBuf::writeUtf); b.writeCollection(p.agents, FriendlyByteBuf::writeUtf);
+            b.writeCollection(p.ledger, FriendlyByteBuf::writeUtf); b.writeUtf(p.message); b.writeBoolean(p.ok);
+        }
+        static TabletState decode(FriendlyByteBuf b) {
+            return new TabletState(b.readVarInt(), b.readBoolean(), b.readLong(), b.readDouble(), b.readDouble(), b.readUtf(), b.readBoolean(),
+                    b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readList(FriendlyByteBuf::readUtf), b.readList(FriendlyByteBuf::readUtf),
+                    b.readList(FriendlyByteBuf::readUtf), b.readUtf(), b.readBoolean());
+        }
+        static void handle(TabletState p, Supplier<NetworkEvent.Context> c) {
+            c.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+                    () -> () -> fr.minenorth.etat.client.ClientNetworkHandler.tablet(p)));
+            c.get().setPacketHandled(true);
+        }
+    }
+
+    /** Action de la tablette (client -> serveur) : le serveur revérifie le rôle à chaque fois. */
+    public record TabletAction(String cmd, String a, String b) {
+        static void encode(TabletAction p, FriendlyByteBuf b) { b.writeUtf(p.cmd, 32); b.writeUtf(p.a, 128); b.writeUtf(p.b, 128); }
+        static TabletAction decode(FriendlyByteBuf b) { return new TabletAction(b.readUtf(32), b.readUtf(128), b.readUtf(128)); }
+        static void handle(TabletAction p, Supplier<NetworkEvent.Context> c) {
+            c.get().enqueueWork(() -> {
+                ServerPlayer sender = c.get().getSender();
+                if (sender == null) return;
+                if (p.cmd().equals("refresh")) fr.minenorth.etat.TabletService.open(sender);
+                else fr.minenorth.etat.TabletService.handle(sender, p.cmd(), p.a(), p.b());
             });
             c.get().setPacketHandled(true);
         }
