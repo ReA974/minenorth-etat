@@ -1,7 +1,20 @@
 {
-  "variants": {
-    "": {
-      "model": "minenorthetat:block/bureau_de_vote"
-    }
+ "variants": {
+  "facing=north": {
+   "model": "minenorthetat:block/bureau_de_vote",
+   "y": 0
+  },
+  "facing=east": {
+   "model": "minenorthetat:block/bureau_de_vote",
+   "y": 90
+  },
+  "facing=south": {
+   "model": "minenorthetat:block/bureau_de_vote",
+   "y": 180
+  },
+  "facing=west": {
+   "model": "minenorthetat:block/bureau_de_vote",
+   "y": 270
   }
+ }
 }
