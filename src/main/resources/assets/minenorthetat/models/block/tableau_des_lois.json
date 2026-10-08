@@ -1,0 +1,30 @@
+{
+  "textures": {
+    "frame": "minecraft:block/dark_oak_planks",
+    "paper": "minecraft:block/white_wool",
+    "particle": "minecraft:block/dark_oak_planks"
+  },
+  "elements": [
+    {
+      "from": [0, 0, 14], "to": [16, 16, 16],
+      "faces": {
+        "north": {"uv": [0, 0, 16, 16], "texture": "#frame"},
+        "south": {"uv": [0, 0, 16, 16], "texture": "#frame"},
+        "east": {"uv": [0, 0, 2, 16], "texture": "#frame"},
+        "west": {"uv": [0, 0, 2, 16], "texture": "#frame"},
+        "up": {"uv": [0, 0, 16, 2], "texture": "#frame"},
+        "down": {"uv": [0, 0, 16, 2], "texture": "#frame"}
+      }
+    },
+    {
+      "from": [1, 1, 13], "to": [15, 15, 14],
+      "faces": {
+        "north": {"uv": [1, 1, 15, 15], "texture": "#paper"},
+        "east": {"uv": [0, 0, 1, 14], "texture": "#frame"},
+        "west": {"uv": [0, 0, 1, 14], "texture": "#frame"},
+        "up": {"uv": [0, 0, 14, 1], "texture": "#frame"},
+        "down": {"uv": [0, 0, 14, 1], "texture": "#frame"}
+      }
+    }
+  ]
+}

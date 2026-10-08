@@ -44,6 +44,12 @@ public class EtatData extends SavedData {
     public final Map<String, Double> salaryOverride = new LinkedHashMap<>();
     public long lastPay;
 
+    /** Lois promulguées par le maire (les plus anciennes d'abord). */
+    public final List<Law> laws = new ArrayList<>();
+    public int lawCounter;
+
+    public record Law(int num, String title, String text, String author, long date) {}
+
     public static EtatData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(EtatData::load, EtatData::new, NAME);
     }
@@ -91,6 +97,11 @@ public class EtatData extends SavedData {
             d.salaryOverride.put(c.getString("k"), c.getDouble("v"));
         }
         d.lastPay = tag.getLong("lastPay");
+        d.lawCounter = tag.getInt("lawCounter");
+        for (Tag t : tag.getList("laws", Tag.TAG_COMPOUND)) {
+            CompoundTag c = (CompoundTag) t;
+            d.laws.add(new Law(c.getInt("num"), c.getString("title"), c.getString("text"), c.getString("author"), c.getLong("date")));
+        }
         return d;
     }
 
@@ -123,6 +134,15 @@ public class EtatData extends SavedData {
         salaryOverride.forEach((k, v) -> { CompoundTag c = new CompoundTag(); c.putString("k", k); c.putDouble("v", v); sal.add(c); });
         tag.put("salaries", sal);
         tag.putLong("lastPay", lastPay);
+        tag.putInt("lawCounter", lawCounter);
+        ListTag lw = new ListTag();
+        for (Law l : laws) {
+            CompoundTag c = new CompoundTag();
+            c.putInt("num", l.num()); c.putString("title", l.title()); c.putString("text", l.text());
+            c.putString("author", l.author()); c.putLong("date", l.date());
+            lw.add(c);
+        }
+        tag.put("laws", lw);
         return tag;
     }
 }

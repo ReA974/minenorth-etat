@@ -55,7 +55,7 @@ public final class TabletService {
         EtatNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> p), new EtatNetwork.TabletState(
                 role, locked(p), d.balance, Etat.taxPercent(s), EtatConfig.get().impot_max_pourcent,
                 d.mayor == null ? "" : MineNorth.displayName(s, d.mayor), d.electionOpen, seconds, d.candidates.size(), d.votes.size(),
-                salaries, agents, ledger, message, ok));
+                salaries, agents, ledger, LawService.rows(d), message, ok));
     }
 
     /** Traite une action de la tablette ; le résultat repart vers le joueur avec l'état à jour. */
@@ -132,6 +132,14 @@ public final class TabletService {
                         done = name + " n'est plus agent municipal.";
                     }
                 }
+            }
+            case "law_add" -> {
+                if (!mayor) error = "Réservé au maire.";
+                else { error = LawService.enact(p, a, b); done = "Loi promulguée."; }
+            }
+            case "law_repeal" -> {
+                if (!mayor) error = "Réservé au maire.";
+                else { error = LawService.repeal(p, parseInt(a, -1)); done = "Loi abrogée."; }
             }
             default -> error = "Action inconnue.";
         }

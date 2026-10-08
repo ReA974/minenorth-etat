@@ -1,5 +1,6 @@
 {
   "block.minenorthetat.bureau_de_vote": "Polling Station",
+  "block.minenorthetat.tableau_des_lois": "Law Board",
   "itemGroup.minenorthetat": "MineNorth State",
   "item.minenorthetat.tablette_mairie": "Tablette de la mairie"
 }

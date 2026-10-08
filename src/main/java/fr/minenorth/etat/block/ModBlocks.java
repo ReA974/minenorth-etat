@@ -24,6 +24,16 @@ public final class ModBlocks {
     public static final RegistryObject<Item> BALLOT_ITEM = ITEMS.register("bureau_de_vote",
             () -> new BlockItem(BALLOT.get(), new Item.Properties()));
 
+    public static final RegistryObject<Block> LAW_BOARD = BLOCKS.register("tableau_des_lois", LawBoardBlock::new);
+    public static final RegistryObject<Item> LAW_BOARD_ITEM = ITEMS.register("tableau_des_lois",
+            () -> new BlockItem(LAW_BOARD.get(), new Item.Properties()));
+
+    public static final DeferredRegister<net.minecraft.world.level.block.entity.BlockEntityType<?>> BLOCK_ENTITIES =
+            DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, MineNorthEtat.MOD_ID);
+    public static final RegistryObject<net.minecraft.world.level.block.entity.BlockEntityType<LawBoardEntity>> LAW_BOARD_BE =
+            BLOCK_ENTITIES.register("tableau_des_lois", () -> net.minecraft.world.level.block.entity.BlockEntityType.Builder
+                    .of(LawBoardEntity::new, LAW_BOARD.get()).build(null));
+
     public static final RegistryObject<Item> TABLET = ITEMS.register("tablette_mairie", fr.minenorth.etat.item.TabletItem::new);
 
     public static final RegistryObject<CreativeModeTab> TAB = TABS.register("etat", () -> CreativeModeTab.builder()
@@ -32,11 +42,13 @@ public final class ModBlocks {
             .displayItems((params, out) -> {
                 out.accept(TABLET.get());
                 out.accept(BALLOT_ITEM.get());
+                out.accept(LAW_BOARD_ITEM.get());
             })
             .build());
 
     public static void register(IEventBus modBus) {
         BLOCKS.register(modBus);
+        BLOCK_ENTITIES.register(modBus);
         ITEMS.register(modBus);
         TABS.register(modBus);
     }

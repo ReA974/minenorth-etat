@@ -17,7 +17,7 @@ import java.util.List;
 public final class TabletScreen extends Screen {
     private static final int W = 320, H = 236;
     private static final int PANEL = 0xF00E0A34, BORDER = 0xFF2E2480, TEXT = 0xFFCFE3FF, DIM = 0xFF8FA8E0, OK = 0xFF5FE0A0, BAD = 0xFFFF5F6B, WHITE = 0xFFFFFFFF;
-    private static final String[] TABS = {"Résumé", "Salaires", "Agents", "Élection"};
+    private static final String[] TABS = {"Résumé", "Salaires", "Agents", "Élection", "Lois"};
 
     private EtatNetwork.TabletState state;
     private int tab;
@@ -103,11 +103,24 @@ public final class TabletScreen extends Screen {
                     button(x + 8, y + 192, 224, "Nommer agent municipal", () -> act("appoint", box1.getValue(), box2.getValue()), true);
                 }
             }
-            default -> {
+            case 3 -> {
                 box1 = edit(x + 8, y + 112, 80, "Minutes", "");
                 button(x + 92, y + 112, 150, "Ouvrir une élection", () -> act("elec_open", box1.getValue(), ""), staff() && !state.electionOpen());
                 button(x + 8, y + 136, 150, "Clôturer et compter", () -> act("elec_close", "", ""), staff() && state.electionOpen());
                 button(x + 162, y + 136, 150, "Annuler", () -> act("elec_cancel", "", ""), staff() && state.electionOpen());
+            }
+            default -> {
+                List<String> laws = state.laws();
+                for (int i = 0; i < Math.min(4, laws.size()); i++) {
+                    final String num = laws.get(i).split("\\|", 5)[0];
+                    button(x + W - 76, cy + i * 18, 68, "Abroger", () -> act("law_repeal", num, ""), mayor());
+                }
+                if (mayor()) {
+                    box1 = edit(x + 8, y + 132, W - 16, "Titre de la loi", "");
+                    box2 = edit(x + 8, y + 154, W - 16, "Texte de la loi (400 caractères max.)", "");
+                    box2.setMaxLength(400);
+                    button(x + 8, y + 178, 150, "Promulguer la loi", () -> act("law_add", box1.getValue(), box2.getValue()), true);
+                }
             }
         }
         button(x + W / 2 - 40, y + H - 26, 80, "Fermer", this::onClose, true);
@@ -153,6 +166,16 @@ public final class TabletScreen extends Screen {
                     g.drawString(font, font.plainSubstrByWidth(r[1] + " · " + (r.length > 2 ? r[2] : ""), W - 108), x + 8, cy + i * 20 + 5, TEXT, false);
                 }
                 if (!mayor()) g.drawString(font, "Seul le maire nomme et révoque les agents.", x + 8, y + 176, DIM, false);
+            }
+            case 4 -> {
+                List<String> laws = state.laws();
+                if (laws.isEmpty()) g.drawString(font, "Aucune loi en vigueur.", x + 8, cy + 4, DIM, false);
+                for (int i = 0; i < Math.min(4, laws.size()); i++) {
+                    String[] r = laws.get(i).split("\\|", 5);
+                    g.drawString(font, font.plainSubstrByWidth("n°" + r[0] + " · " + (r.length > 1 ? r[1] : ""), W - 90), x + 8, cy + i * 18 + 5, TEXT, false);
+                }
+                if (laws.size() > 4) g.drawString(font, "(" + laws.size() + " lois, 4 dernières affichées : tableau des lois pour tout voir)", x + 8, y + 122, DIM, false);
+                if (!mayor()) g.drawString(font, "Seul le maire promulgue et abroge les lois.", x + 8, y + 140, DIM, false);
             }
             default -> {
                 if (state.electionOpen()) {

@@ -13,6 +13,10 @@ public final class ClientNetworkHandler {
         else mc.setScreen(new TabletScreen(p));
     }
 
+    public static void laws(EtatNetwork.LawsPacket p) {
+        Minecraft.getInstance().setScreen(new LawsScreen(p));
+    }
+
     public static void state(EtatNetwork.StatePacket p) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen instanceof BallotScreen screen) screen.update(p);

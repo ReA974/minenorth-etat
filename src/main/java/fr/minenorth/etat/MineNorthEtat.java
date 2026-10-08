@@ -18,6 +18,11 @@ public class MineNorthEtat {
     }
 
     @SubscribeEvent
+    public void login(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent e) {
+        if (e.getEntity() instanceof net.minecraft.server.level.ServerPlayer sp) LawService.sendTitles(sp);
+    }
+
+    @SubscribeEvent
     public void logout(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) {
         fr.minenorth.etat.network.EtatNetwork.forget(e.getEntity().getUUID());
     }
