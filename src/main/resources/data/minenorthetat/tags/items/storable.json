@@ -1,0 +1,85 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "minenorth_eurobank:coin_1c",
+      "required": false
+    },
+    {
+      "id": "minenorth_eurobank:coin_2c",
+      "required": false
+    },
+    {
+      "id": "minenorth_eurobank:coin_5c",
+      "required": false
+    },
+    {
+      "id": "minenorth_eurobank:coin_10c",
+      "required": false
+    },
+    {
+      "id": "minenorth_eurobank:coin_20c",
+      "required": false
+    },
+    {
+      "id": "minenorth_eurobank:coin_50c",
+      "required": false
+    },
+    {
+      "id": "minenorth_eurobank:coin_1e",
+      "required": false
+    },
+    {
+      "id": "minenorth_eurobank:coin_2e",
+      "required": false
+    },
+    {
+      "id": "minenorth_eurobank:bill_5e",
+      "required": false
+    },
+    {
+      "id": "minenorth_eurobank:bill_10e",
+      "required": false
+    },
+    {
+      "id": "minenorth_eurobank:bill_20e",
+      "required": false
+    },
+    {
+      "id": "minenorth_eurobank:bill_50e",
+      "required": false
+    },
+    {
+      "id": "minenorth_eurobank:bill_100e",
+      "required": false
+    },
+    {
+      "id": "minenorth_eurobank:bill_200e",
+      "required": false
+    },
+    {
+      "id": "minenorth_eurobank:bill_500e",
+      "required": false
+    },
+    {
+      "id": "minenorth_eurobank:bank_card",
+      "required": false
+    },
+    {
+      "id": "minenorth_eurobank:business_card",
+      "required": false
+    },
+    {
+      "id": "minenorthidentite:identity_card",
+      "required": false
+    },
+    {
+      "id": "minenorth_permis:permis_card",
+      "required": false
+    },
+    {
+      "id": "mts:mts.key",
+      "required": false
+    }
+  ]
+}

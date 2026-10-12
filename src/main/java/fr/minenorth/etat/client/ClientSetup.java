@@ -13,6 +13,12 @@ public final class ClientSetup {
     private ClientSetup() {}
 
     @SubscribeEvent
+    public static void clientSetup(net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent e) {
+        e.enqueueWork(() -> net.minecraft.client.gui.screens.MenuScreens.register(
+                fr.minenorth.etat.wallet.WalletRegistry.WALLET_MENU.get(), WalletScreen::new));
+    }
+
+    @SubscribeEvent
     public static void renderers(EntityRenderersEvent.RegisterRenderers e) {
         e.registerBlockEntityRenderer(ModBlocks.LAW_BOARD_BE.get(), LawBoardRenderer::new);
     }
