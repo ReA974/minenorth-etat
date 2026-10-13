@@ -36,22 +36,17 @@ public final class ModBlocks {
 
     public static final RegistryObject<Item> TABLET = ITEMS.register("tablette_mairie", fr.minenorth.etat.item.TabletItem::new);
 
-    public static final RegistryObject<CreativeModeTab> TAB = TABS.register("etat", () -> CreativeModeTab.builder()
-            .title(Component.translatable("itemGroup.minenorthetat"))
-            .icon(() -> new ItemStack(TABLET.get()))
-            .displayItems((params, out) -> {
+    public static final net.minecraft.world.item.CreativeModeTab.DisplayItemsGenerator TAB_ITEMS = (params, out) -> {
                 out.accept(TABLET.get());
                 out.accept(BALLOT_ITEM.get());
                 out.accept(LAW_BOARD_ITEM.get());
                 out.accept(fr.minenorth.etat.wallet.WalletRegistry.WALLET.get());
-            })
-            .build());
+            };
 
     public static void register(IEventBus modBus) {
         BLOCKS.register(modBus);
         BLOCK_ENTITIES.register(modBus);
         ITEMS.register(modBus);
-        TABS.register(modBus);
         fr.minenorth.etat.wallet.WalletRegistry.MENUS.register(modBus);
     }
 }
