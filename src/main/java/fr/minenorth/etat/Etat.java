@@ -17,6 +17,12 @@ public final class Etat {
         return o >= 0 ? o : EtatConfig.get().impot_pourcent;
     }
 
+    /** Impôt sur le compte des joueurs connectés, en % du solde au-dessus de la franchise. */
+    public static double wealthPercent(MinecraftServer s) {
+        double o = EtatData.get(s).wealthOverride;
+        return o >= 0 ? o : EtatConfig.get().impot_compte_pourcent;
+    }
+
     /** kind : "police", "pompier" (grade >= 0) ou "agent" (grade ignoré). Euros par paie. */
     public static double salaryEuros(MinecraftServer s, String kind, int grade) {
         Double o = EtatData.get(s).salaryOverride.get(salaryKey(kind, grade));

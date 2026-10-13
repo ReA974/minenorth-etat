@@ -55,7 +55,7 @@ public final class TabletService {
         EtatNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> p), new EtatNetwork.TabletState(
                 role, locked(p), d.balance, Etat.taxPercent(s), EtatConfig.get().impot_max_pourcent,
                 d.mayor == null ? "" : MineNorth.displayName(s, d.mayor), d.electionOpen, seconds, d.candidates.size(), d.votes.size(),
-                salaries, agents, ledger, LawService.rows(d), message, ok));
+                salaries, agents, ledger, LawService.rows(d), message, ok, Etat.wealthPercent(s), EtatConfig.get().impot_compte_max_pourcent));
     }
 
     /** Traite une action de la tablette ; le résultat repart vers le joueur avec l'état à jour. */
@@ -70,12 +70,23 @@ public final class TabletService {
         boolean mayor = role == ROLE_MAYOR;
         switch (cmd) {
             case "elec_open" -> {
+                if (!mayor) { error = "Réservé au maire."; break; }
                 int min = parseInt(a, EtatConfig.get().election_duree_minutes);
                 if (min < 1 || min > 60 * 24 * 30) error = "Durée invalide (1 minute à 30 jours).";
                 else { error = ElectionService.open(s, min); done = "Élection ouverte."; }
             }
-            case "elec_close" -> { error = ElectionService.close(s); done = "Élection clôturée."; }
-            case "elec_cancel" -> { error = ElectionService.cancel(s); done = "Élection annulée."; }
+            case "elec_close" -> {
+                if (!mayor) error = "Réservé au maire.";
+                else { error = ElectionService.close(s); done = "Élection clôturée."; }
+            }
+            case "elec_cancel" -> {
+                if (!mayor) error = "Réservé au maire.";
+                else { error = ElectionService.cancel(s); done = "Élection annulée."; }
+            }
+            case "announce" -> {
+                if (!mayor) error = "Réservé au maire.";
+                else { error = announce(p, a, b); done = "Annonce diffusée à toute la ville."; }
+            }
             case "tax" -> {
                 if (!mayor) error = "Réservé au maire.";
                 else {
@@ -88,6 +99,21 @@ public final class TabletService {
                         d.log("Impôt fixé à " + Etat.percent(v) + " par " + who);
                         d.setDirty();
                         done = "Impôt fixé à " + Etat.percent(v) + ".";
+                    }
+                }
+            }
+            case "wtax" -> {
+                if (!mayor) error = "Réservé au maire.";
+                else {
+                    double v = parseDouble(a);
+                    double max = EtatConfig.get().impot_compte_max_pourcent;
+                    if (Double.isNaN(v) || v < 0 || v > 100) error = "Taux invalide (0 à 100 %).";
+                    else if (v > max && !p.hasPermissions(2)) error = "Le maximum autorisé est " + Etat.percent(max) + ".";
+                    else {
+                        d.wealthOverride = v;
+                        d.log("Impôt sur le compte fixé à " + Etat.percent(v) + " par " + who);
+                        d.setDirty();
+                        done = "Impôt sur le compte fixé à " + Etat.percent(v) + ".";
                     }
                 }
             }
@@ -144,6 +170,36 @@ public final class TabletService {
             default -> error = "Action inconnue.";
         }
         sendState(p, error != null ? error : done, error == null);
+    }
+
+    private static long lastAnnounce;
+
+    /** Discours officiel du maire : titre à l'écran + message dans le chat pour tous les joueurs, payé par le trésor, avec un délai entre deux annonces. */
+    private static String announce(ServerPlayer p, String title, String text) {
+        title = title == null ? "" : title.trim();
+        text = text == null ? "" : text.trim();
+        if (title.isEmpty()) return "Il faut un titre.";
+        if (title.length() > 40) return "Titre trop long (40 caractères maximum).";
+        if (text.length() > 200) return "Message trop long (200 caractères maximum).";
+        EtatConfig cfg = EtatConfig.get();
+        EtatData d = EtatData.get(p.server);
+        long wait = lastAnnounce + cfg.annonce_delai_minutes * 60_000L - System.currentTimeMillis();
+        if (wait > 0 && !p.hasPermissions(2)) return "Prochaine annonce possible dans " + ((wait + 59_999) / 60_000) + " min.";
+        long cost = Etat.cents(cfg.annonce_cout_euros);
+        if (d.balance < cost) return "Le trésor ne couvre pas le coût de l'annonce (" + Etat.money(cost) + ").";
+        d.balance -= cost;
+        lastAnnounce = System.currentTimeMillis();
+        String who = MineNorth.displayName(p);
+        d.log("Annonce officielle « " + title + " » par " + who + " (" + Etat.money(cost) + ")");
+        d.setDirty();
+        Component line = Component.literal("§6§l[Mairie] §e" + title + (text.isEmpty() ? "" : " §f— " + text) + " §7(" + who + ")");
+        for (ServerPlayer o : p.server.getPlayerList().getPlayers()) {
+            o.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket(10, 80, 20));
+            o.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket(Component.literal("§6" + title)));
+            o.connection.send(new net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket(Component.literal("§f" + (text.isEmpty() ? "Annonce du maire " + who : text))));
+            o.sendSystemMessage(line);
+        }
+        return null;
     }
 
     private static String appoint(ServerPlayer mayor, String name, String title) {

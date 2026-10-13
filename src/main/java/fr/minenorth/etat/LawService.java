@@ -25,7 +25,13 @@ public final class LawService {
         EtatData d = EtatData.get(by.server);
         if (d.laws.size() >= MAX_LAWS) return "Le tableau est plein (" + MAX_LAWS + " lois) : abrogez-en une.";
         String who = MineNorth.displayName(by);
-        int num = ++d.lawCounter;
+        int num = 1;   // plus petit numéro libre : abroger la n°3 puis promulguer donne de nouveau la n°3
+        while (true) {
+            final int n = num;
+            if (d.laws.stream().noneMatch(l -> l.num() == n)) break;
+            num++;
+        }
+        d.lawCounter = Math.max(d.lawCounter, num);
         d.laws.add(new EtatData.Law(num, title, text, who, System.currentTimeMillis()));
         d.log("Loi n°" + num + " « " + title + " » promulguée par " + who);
         d.setDirty();

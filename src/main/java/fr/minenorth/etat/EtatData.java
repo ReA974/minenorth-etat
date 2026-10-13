@@ -43,6 +43,8 @@ public class EtatData extends SavedData {
     public double taxOverride = -1;
     public final Map<String, Double> salaryOverride = new LinkedHashMap<>();
     public long lastPay;
+    public double wealthOverride = -1;
+    public long lastWealthTax;
 
     /** Lois promulguées par le maire (les plus anciennes d'abord). */
     public final List<Law> laws = new ArrayList<>();
@@ -97,6 +99,8 @@ public class EtatData extends SavedData {
             d.salaryOverride.put(c.getString("k"), c.getDouble("v"));
         }
         d.lastPay = tag.getLong("lastPay");
+        d.wealthOverride = tag.contains("wealthOverride") ? tag.getDouble("wealthOverride") : -1;
+        d.lastWealthTax = tag.getLong("lastWealthTax");
         d.lawCounter = tag.getInt("lawCounter");
         for (Tag t : tag.getList("laws", Tag.TAG_COMPOUND)) {
             CompoundTag c = (CompoundTag) t;
@@ -134,6 +138,8 @@ public class EtatData extends SavedData {
         salaryOverride.forEach((k, v) -> { CompoundTag c = new CompoundTag(); c.putString("k", k); c.putDouble("v", v); sal.add(c); });
         tag.put("salaries", sal);
         tag.putLong("lastPay", lastPay);
+        if (wealthOverride >= 0) tag.putDouble("wealthOverride", wealthOverride);
+        tag.putLong("lastWealthTax", lastWealthTax);
         tag.putInt("lawCounter", lawCounter);
         ListTag lw = new ListTag();
         for (Law l : laws) {

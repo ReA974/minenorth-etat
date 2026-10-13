@@ -103,18 +103,18 @@ public final class EtatNetwork {
     /** État de la tablette de la mairie (serveur -> client). Les listes sont des lignes "a|b|c". */
     public record TabletState(int role, boolean locked, long balance, double tax, double taxMax, String mayor, boolean electionOpen,
                               int secondsLeft, int candidates, int votes, List<String> salaries, List<String> agents,
-                              List<String> ledger, List<String> laws, String message, boolean ok) {
+                              List<String> ledger, List<String> laws, String message, boolean ok, double wealthTax, double wealthTaxMax) {
         static void encode(TabletState p, FriendlyByteBuf b) {
             b.writeVarInt(p.role); b.writeBoolean(p.locked); b.writeLong(p.balance); b.writeDouble(p.tax); b.writeDouble(p.taxMax);
             b.writeUtf(p.mayor); b.writeBoolean(p.electionOpen); b.writeVarInt(p.secondsLeft); b.writeVarInt(p.candidates); b.writeVarInt(p.votes);
             b.writeCollection(p.salaries, FriendlyByteBuf::writeUtf); b.writeCollection(p.agents, FriendlyByteBuf::writeUtf);
             b.writeCollection(p.ledger, FriendlyByteBuf::writeUtf); b.writeCollection(p.laws, FriendlyByteBuf::writeUtf);
-            b.writeUtf(p.message); b.writeBoolean(p.ok);
+            b.writeUtf(p.message); b.writeBoolean(p.ok); b.writeDouble(p.wealthTax); b.writeDouble(p.wealthTaxMax);
         }
         static TabletState decode(FriendlyByteBuf b) {
             return new TabletState(b.readVarInt(), b.readBoolean(), b.readLong(), b.readDouble(), b.readDouble(), b.readUtf(), b.readBoolean(),
                     b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readList(FriendlyByteBuf::readUtf), b.readList(FriendlyByteBuf::readUtf),
-                    b.readList(FriendlyByteBuf::readUtf), b.readList(FriendlyByteBuf::readUtf), b.readUtf(), b.readBoolean());
+                    b.readList(FriendlyByteBuf::readUtf), b.readList(FriendlyByteBuf::readUtf), b.readUtf(), b.readBoolean(), b.readDouble(), b.readDouble());
         }
         static void handle(TabletState p, Supplier<NetworkEvent.Context> c) {
             c.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,

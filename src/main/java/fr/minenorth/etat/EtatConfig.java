@@ -34,6 +34,16 @@ public final class EtatConfig {
     /** Durée par défaut d'une élection, en minutes. */
     public int election_duree_minutes = 1440;
     public int agents_max = 10;
+    /** Impôt sur le compte des joueurs connectés : % de ce qui dépasse la franchise, prélevé à chaque intervalle (0 = désactivé). */
+    public double impot_compte_pourcent = 1.0;
+    /** Plafond que le maire ne peut pas dépasser pour cet impôt. */
+    public double impot_compte_max_pourcent = 5.0;
+    /** Solde en dessous duquel rien n'est prélevé, en euros. */
+    public double impot_compte_franchise_euros = 1000;
+    public int impot_compte_intervalle_minutes = 60;
+    /** Annonce officielle du maire (titre à l'écran de tous les joueurs) : coût prélevé sur le trésor, et délai entre deux annonces. */
+    public double annonce_cout_euros = 100;
+    public int annonce_delai_minutes = 15;
 
     public static EtatConfig get() { return current; }
 
@@ -57,6 +67,10 @@ public final class EtatConfig {
         c.impot_pourcent = Math.max(0, Math.min(100, c.impot_pourcent));
         c.salaire_intervalle_minutes = Math.max(1, c.salaire_intervalle_minutes);
         c.agents_max = Math.max(0, c.agents_max);
+        c.impot_compte_max_pourcent = Math.max(0, Math.min(100, c.impot_compte_max_pourcent));
+        c.impot_compte_pourcent = Math.max(0, Math.min(100, c.impot_compte_pourcent));
+        c.impot_compte_franchise_euros = Math.max(0, c.impot_compte_franchise_euros);
+        c.impot_compte_intervalle_minutes = Math.max(1, c.impot_compte_intervalle_minutes);
         c.election_duree_minutes = Math.max(1, c.election_duree_minutes);
         // On ne réécrit pas un fichier illisible : l'admin peut ainsi corriger sa faute de frappe.
         if (ok) {

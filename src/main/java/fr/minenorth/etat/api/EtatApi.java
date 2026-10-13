@@ -43,6 +43,34 @@ public final class EtatApi {
         return "Impôt remis à " + Etat.percent(Etat.taxPercent(s)) + " (config).";
     }
 
+    /** Impôt sur le compte des joueurs connectés (% du solde au-dessus de la franchise), plafond du maire, franchise (euros) et intervalle (minutes). */
+    public static double wealthPercent(MinecraftServer s) { return Etat.wealthPercent(s); }
+
+    public static double wealthMaxPercent() { return EtatConfig.get().impot_compte_max_pourcent; }
+
+    public static double wealthFranchise() { return EtatConfig.get().impot_compte_franchise_euros; }
+
+    public static int wealthMinutes() { return EtatConfig.get().impot_compte_intervalle_minutes; }
+
+    /** Fixe l'impôt sur le compte (admin : pas de plafond, 0..100). Renvoie le message de résultat. */
+    public static String setWealthPercent(MinecraftServer s, double percent) {
+        if (percent < 0 || percent > 100) return "L'impôt doit être entre 0 et 100 %.";
+        EtatData d = EtatData.get(s);
+        d.wealthOverride = percent;
+        d.setDirty();
+        d.log("Impôt sur le compte fixé à " + Etat.percent(percent) + " (admin)");
+        return "Impôt sur le compte fixé à " + Etat.percent(percent) + ".";
+    }
+
+    /** Revient à la valeur de la config. */
+    public static String resetWealthPercent(MinecraftServer s) {
+        EtatData d = EtatData.get(s);
+        d.wealthOverride = -1;
+        d.setDirty();
+        d.log("Impôt sur le compte remis à la valeur de la config (admin)");
+        return "Impôt sur le compte remis à " + Etat.percent(Etat.wealthPercent(s)) + " (config).";
+    }
+
     /** Uuid du maire, ou null. */
     public static UUID mayor(MinecraftServer s) { return EtatData.get(s).mayor; }
 

@@ -17,7 +17,7 @@ import java.util.List;
 public final class TabletScreen extends Screen {
     private static final int W = 320, H = 236;
     private static final int PANEL = 0xF00E0A34, BORDER = 0xFF2E2480, TEXT = 0xFFCFE3FF, DIM = 0xFF8FA8E0, OK = 0xFF5FE0A0, BAD = 0xFFFF5F6B, WHITE = 0xFFFFFFFF;
-    private static final String[] TABS = {"Résumé", "Salaires", "Agents", "Élection", "Lois"};
+    private static final String[] TABS = {"Résumé", "Salaires", "Agents", "Élection", "Lois", "Annonce"};
 
     private EtatNetwork.TabletState state;
     private int tab;
@@ -73,7 +73,9 @@ public final class TabletScreen extends Screen {
             case 0 -> {
                 if (mayor()) {
                     box1 = edit(x + 8, y + 112, 80, "Impôt en %", Etat.percent(state.tax()).replace(" %", ""));
-                    button(x + 92, y + 112, 150, "Fixer l'impôt", () -> act("tax", box1.getValue(), ""), true);
+                    button(x + 92, y + 112, 150, "Fixer l'impôt (achats)", () -> act("tax", box1.getValue(), ""), true);
+                    box2 = edit(x + 8, y + 134, 80, "Compte en %", Etat.percent(state.wealthTax()).replace(" %", ""));
+                    button(x + 92, y + 134, 150, "Fixer l'impôt (comptes)", () -> act("wtax", box2.getValue(), ""), true);
                 }
             }
             case 1 -> {
@@ -105,9 +107,18 @@ public final class TabletScreen extends Screen {
             }
             case 3 -> {
                 box1 = edit(x + 8, y + 112, 80, "Minutes", "");
-                button(x + 92, y + 112, 150, "Ouvrir une élection", () -> act("elec_open", box1.getValue(), ""), staff() && !state.electionOpen());
-                button(x + 8, y + 136, 150, "Clôturer et compter", () -> act("elec_close", "", ""), staff() && state.electionOpen());
-                button(x + 162, y + 136, 150, "Annuler", () -> act("elec_cancel", "", ""), staff() && state.electionOpen());
+                button(x + 92, y + 112, 150, "Ouvrir une élection", () -> act("elec_open", box1.getValue(), ""), mayor() && !state.electionOpen());
+                button(x + 8, y + 136, 150, "Clôturer et compter", () -> act("elec_close", "", ""), mayor() && state.electionOpen());
+                button(x + 162, y + 136, 150, "Annuler", () -> act("elec_cancel", "", ""), mayor() && state.electionOpen());
+            }
+            case 5 -> {
+                if (mayor()) {
+                    box1 = edit(x + 8, y + 90, W - 16, "Titre affiché à l'écran de tous (40 max.)", "");
+                    box1.setMaxLength(40);
+                    box2 = edit(x + 8, y + 114, W - 16, "Message (200 caractères max., facultatif)", "");
+                    box2.setMaxLength(200);
+                    button(x + 8, y + 140, 150, "Diffuser l'annonce", () -> act("announce", box1.getValue(), box2.getValue()), true);
+                }
             }
             default -> {
                 List<String> laws = state.laws();
@@ -145,9 +156,10 @@ public final class TabletScreen extends Screen {
                 g.drawString(font, "Trésor : " + Etat.money(state.balance()), x + 8, cy, OK, false);
                 g.drawString(font, "Impôt sur les achats : " + Etat.percent(state.tax()) + " (max " + Etat.percent(state.taxMax()) + ")", x + 8, cy + 12, TEXT, false);
                 g.drawString(font, state.mayor().isEmpty() ? "Maire : personne" : "Maire : " + state.mayor(), x + 8, cy + 24, TEXT, false);
+                g.drawString(font, "Impôt sur les comptes : " + Etat.percent(state.wealthTax()) + " (max " + Etat.percent(state.wealthTaxMax()) + ")", x + 8, cy + 36, TEXT, false);
                 SimpleDateFormat fmt = new SimpleDateFormat("dd/MM HH:mm");
-                int ly = y + 138;
-                for (int i = 0; i < Math.min(4, state.ledger().size()); i++) {
+                int ly = y + 160;
+                for (int i = 0; i < Math.min(3, state.ledger().size()); i++) {
                     String[] parts = state.ledger().get(i).split("\\|", 2);
                     String line = parts.length > 1 ? parts[1] : parts[0];
                     try { line = fmt.format(new Date(Long.parseLong(parts[0]))) + " " + line; } catch (RuntimeException ignored) {}
@@ -166,6 +178,12 @@ public final class TabletScreen extends Screen {
                     g.drawString(font, font.plainSubstrByWidth(r[1] + " · " + (r.length > 2 ? r[2] : ""), W - 108), x + 8, cy + i * 20 + 5, TEXT, false);
                 }
                 if (!mayor()) g.drawString(font, "Seul le maire nomme et révoque les agents.", x + 8, y + 176, DIM, false);
+            }
+            case 5 -> {
+                g.drawString(font, "Annonce officielle : un titre apparaît à l'écran de tous", x + 8, cy, TEXT, false);
+                g.drawString(font, "les joueurs, avec votre message dans le chat.", x + 8, cy + 12, TEXT, false);
+                g.drawString(font, "Coût prélevé sur le trésor, délai entre deux annonces.", x + 8, cy + 24, DIM, false);
+                if (!mayor()) g.drawString(font, "Seul le maire peut faire une annonce.", x + 8, y + 140, DIM, false);
             }
             case 4 -> {
                 List<String> laws = state.laws();
