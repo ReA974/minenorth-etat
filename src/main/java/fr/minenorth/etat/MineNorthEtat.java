@@ -12,6 +12,7 @@ public class MineNorthEtat {
 
     public MineNorthEtat() {
         EtatConfig.load();
+        MineNorth.provide(fr.minenorth.api.StateService.class, new fr.minenorth.etat.api.StateProvider());
         fr.minenorth.etat.block.ModBlocks.register(net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext.get().getModEventBus());
         fr.minenorth.etat.network.EtatNetwork.register();
         MinecraftForge.EVENT_BUS.register(this);
