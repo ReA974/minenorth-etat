@@ -150,7 +150,7 @@ public final class TabletService {
                     if (id == null || !d.agents.containsKey(id)) error = "Agent introuvable.";
                     else {
                         String name = MineNorth.displayName(s, id);
-                        d.agents.remove(id);
+                        d.agents.remove(id); d.salaryOverride.remove(Etat.agentKey(id));
                         d.log(name + " révoqué par " + who);
                         d.setDirty();
                         ServerPlayer on = s.getPlayerList().getPlayer(id);

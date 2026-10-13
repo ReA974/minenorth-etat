@@ -21,7 +21,7 @@ public final class TabletScreen extends Screen {
 
     private EtatNetwork.TabletState state;
     private int tab;
-    private int selectedSalary = -1;
+    private int selectedSalary = -1, salaryScroll;
     private long receivedAt = System.currentTimeMillis();
     private EditBox box1, box2;
 
@@ -34,6 +34,17 @@ public final class TabletScreen extends Screen {
         this.state = p;
         this.receivedAt = System.currentTimeMillis();
         rebuildWidgets();
+    }
+
+    @Override
+    public boolean mouseScrolled(double mx, double my, double delta) {
+        if (tab == 1 && state.salaries().size() > 6) {
+            int max = state.salaries().size() - 6;
+            int next = Math.max(0, Math.min(max, salaryScroll - (int) Math.signum(delta)));
+            if (next != salaryScroll) { salaryScroll = next; rebuildWidgets(); }
+            return true;
+        }
+        return super.mouseScrolled(mx, my, delta);
     }
 
     private boolean mayor() { return state.role() == TabletService.ROLE_MAYOR && !state.locked(); }
@@ -80,11 +91,12 @@ public final class TabletScreen extends Screen {
             }
             case 1 -> {
                 List<String> rows = state.salaries();
-                for (int i = 0; i < Math.min(6, rows.size()); i++) {
-                    final int idx = i;
-                    String[] r = rows.get(i).split("\\|");
+                salaryScroll = Math.max(0, Math.min(salaryScroll, Math.max(0, rows.size() - 6)));
+                for (int i = 0; i < Math.min(6, rows.size() - salaryScroll); i++) {
+                    final int idx = salaryScroll + i;
+                    String[] r = rows.get(idx).split("\\|");
                     button(x + 8, cy + i * 20, W - 16, r[1] + " : " + Etat.money(Etat.cents(parse(r[2]))),
-                            () -> { selectedSalary = idx; rebuildWidgets(); }, mayor() && selectedSalary != i);
+                            () -> { selectedSalary = idx; rebuildWidgets(); }, mayor() && selectedSalary != idx);
                 }
                 if (mayor() && selectedSalary >= 0 && selectedSalary < rows.size()) {
                     String key = rows.get(selectedSalary).split("\\|")[0];
@@ -167,7 +179,7 @@ public final class TabletScreen extends Screen {
                 }
             }
             case 1 -> {
-                if (state.salaries().size() > 6) g.drawString(font, "(" + state.salaries().size() + " postes, 6 premiers affichés)", x + 8, y + 172, DIM, false);
+                if (state.salaries().size() > 6) g.drawString(font, "(" + (salaryScroll + 1) + " à " + Math.min(state.salaries().size(), salaryScroll + 6) + " sur " + state.salaries().size() + " postes : molette pour défiler)", x + 8, y + 172, DIM, false);
                 if (!mayor()) g.drawString(font, "Seul le maire peut modifier les salaires.", x + 8, y + 184, DIM, false);
                 else if (selectedSalary < 0) g.drawString(font, "Choisissez un poste pour changer son salaire.", x + 8, y + 184, DIM, false);
             }

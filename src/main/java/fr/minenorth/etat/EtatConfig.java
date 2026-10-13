@@ -25,6 +25,8 @@ public final class EtatConfig {
     public double[] salaire_police_euros = {300, 200, 100};
     public double[] salaire_pompier_euros = {300, 200, 100};
     public double salaire_agent_euros = 100;
+    /** Salaire du maire (modifiable par le maire lui-même, dans la limite de salaire_max_euros). */
+    public double salaire_maire_euros = 300;
     /** Plafond de salaire que le maire peut fixer. */
     public double salaire_max_euros = 2000;
     /** Intervalle entre deux paies, en minutes. */

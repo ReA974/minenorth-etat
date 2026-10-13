@@ -104,7 +104,14 @@ public final class EtatApi {
         for (int i = 0; i < pg.size(); i++) out.add(row(s, d, "police", i, "Police · " + pg.get(i)));
         String[] sg = fr.minenorth.etat.SalaryService.secoursGrades();
         for (int i = 0; i < sg.length; i++) out.add(row(s, d, "pompier", i, "Pompiers · " + sg[i]));
-        out.add(row(s, d, "agent", -1, "Agents municipaux"));
+        out.add(row(s, d, "maire", -1, "Maire (votre salaire)"));
+        out.add(row(s, d, "agent", -1, "Agents municipaux (salaire commun)"));
+        for (java.util.Map.Entry<java.util.UUID, String> en : d.agents.entrySet()) {
+            String key = Etat.agentKey(en.getKey());
+            String name = fr.minenorth.api.MineNorth.displayName(s, en.getKey());
+            out.add(key + "|Agent · " + name + (en.getValue().isBlank() ? "" : " (" + en.getValue() + ")") + "|" + Etat.agentSalaryEuros(s, en.getKey()) + "|"
+                    + (d.salaryOverride.containsKey(key) ? 1 : 0));
+        }
         return out.toArray(new String[0]);
     }
 
@@ -113,7 +120,7 @@ public final class EtatApi {
         return key + "|" + label + "|" + Etat.salaryEuros(s, kind, grade) + "|" + (d.salaryOverride.containsKey(key) ? 1 : 0);
     }
 
-    /** Fixe un salaire (admin : pas de plafond). key : "police:0", "pompier:1", "agent". */
+    /** Fixe un salaire (admin : pas de plafond). key : "police:0", "pompier:1", "agent" (commun), "agent:<uuid>" (individuel), "maire". */
     public static String setSalary(MinecraftServer s, String key, double euros) {
         if (euros < 0) return "Salaire invalide.";
         EtatData d = EtatData.get(s);

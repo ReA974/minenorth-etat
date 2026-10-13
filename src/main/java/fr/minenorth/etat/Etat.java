@@ -28,13 +28,28 @@ public final class Etat {
         Double o = EtatData.get(s).salaryOverride.get(salaryKey(kind, grade));
         if (o != null) return o;
         EtatConfig c = EtatConfig.get();
+        if (kind.equals("maire")) return c.salaire_maire_euros;
         double[] table = kind.equals("police") ? c.salaire_police_euros : kind.equals("pompier") ? c.salaire_pompier_euros : null;
         if (table == null) return c.salaire_agent_euros;
         if (grade < 0) return 0;
         return table[Math.min(grade, table.length - 1)];
     }
 
-    public static String salaryKey(String kind, int grade) { return kind.equals("agent") ? "agent" : kind + ":" + grade; }
+    public static String salaryKey(String kind, int grade) { return kind.equals("agent") || kind.equals("maire") ? kind : kind + ":" + grade; }
+
+    /** Clé du salaire individuel d'un agent municipal (passe avant le salaire commun des agents). */
+    public static String agentKey(UUID id) { return "agent:" + id; }
+
+    /** Salaire d'un agent municipal : le sien s'il a été fixé, sinon le salaire commun des agents. Euros par paie. */
+    public static double agentSalaryEuros(MinecraftServer s, UUID id) {
+        Double o = EtatData.get(s).salaryOverride.get(agentKey(id));
+        return o != null ? o : salaryEuros(s, "agent", -1);
+    }
+
+    /** Salaire d'un salarié de l'État (individuel pour un agent). Euros par paie. */
+    public static double workerSalaryEuros(MinecraftServer s, SalaryService.Worker w) {
+        return w.kind().equals("agent") ? agentSalaryEuros(s, w.id()) : salaryEuros(s, w.kind(), w.grade());
+    }
 
     public static boolean isMayor(MinecraftServer s, UUID id) {
         UUID m = EtatData.get(s).mayor;

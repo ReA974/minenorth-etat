@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Paie, à intervalle régulier, les policiers (connectés), les pompiers (en service) et les agents municipaux (connectés).
+ * Paie, à intervalle régulier, le maire et les agents municipaux (connectés, chaque agent a son salaire s'il a été fixé), les policiers (connectés) et les pompiers (en service).
  * Le salaire de leur grade est prélevé sur le trésor ; si le trésor ne suffit plus, personne n'est payé pour ce tour.
  */
 @Mod.EventBusSubscriber(modid = MineNorthEtat.MOD_ID)
@@ -59,6 +59,8 @@ public final class SalaryService {
             out.add(new Worker(en.getKey(), "pompier", g, "Pompiers" + (g < sg.length ? " (" + sg[g] + ")" : "")));
         }
         EtatData d = EtatData.get(s);
+        if (d.mayor != null && s.getPlayerList().getPlayer(d.mayor) != null)
+            out.add(new Worker(d.mayor, "maire", -1, "Maire"));
         for (Map.Entry<UUID, String> en : d.agents.entrySet()) {
             if (s.getPlayerList().getPlayer(en.getKey()) == null) continue;
             out.add(new Worker(en.getKey(), "agent", -1, en.getValue().isBlank() ? "Agent municipal" : en.getValue()));
@@ -73,7 +75,7 @@ public final class SalaryService {
         int paid = 0;
         boolean empty = false;
         for (Worker w : workers(s)) {
-            long cents = Etat.cents(Etat.salaryEuros(s, w.kind(), w.grade()));
+            long cents = Etat.cents(Etat.workerSalaryEuros(s, w));
             ServerPlayer p = s.getPlayerList().getPlayer(w.id());
             if (cents <= 0 || p == null) continue;
             if (!bank.hasAccount(s, w.id())) {

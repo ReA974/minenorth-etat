@@ -168,6 +168,12 @@ public final class EtatCommands {
                         .then(Commands.literal("pompier").then(Commands.argument("grade", IntegerArgumentType.integer(1, 20))
                                 .then(Commands.argument("euros", DoubleArgumentType.doubleArg(0)).executes(c ->
                                         setSalary(c.getSource(), "pompier", IntegerArgumentType.getInteger(c, "grade") - 1, DoubleArgumentType.getDouble(c, "euros"))))))
+                        .then(Commands.literal("maire").then(Commands.argument("euros", DoubleArgumentType.doubleArg(0)).executes(c ->
+                                setSalary(c.getSource(), "maire", -1, DoubleArgumentType.getDouble(c, "euros")))))
+                        .then(Commands.literal("employe").then(Commands.argument("nom", StringArgumentType.string())
+                                .suggests((c, b) -> SharedSuggestionProvider.suggest(agentNames(c.getSource().getServer()), b))
+                                .then(Commands.argument("euros", DoubleArgumentType.doubleArg(0)).executes(c ->
+                                        setAgentSalary(c.getSource(), StringArgumentType.getString(c, "nom"), DoubleArgumentType.getDouble(c, "euros"))))))
                         .then(Commands.literal("agent").then(Commands.argument("euros", DoubleArgumentType.doubleArg(0)).executes(c ->
                                 setSalary(c.getSource(), "agent", -1, DoubleArgumentType.getDouble(c, "euros"))))))
                 .then(Commands.literal("agent")
@@ -183,7 +189,7 @@ public final class EtatCommands {
                                     UUID id = agentByName(data, s, StringArgumentType.getString(c, "nom"));
                                     if (id == null) return say(c.getSource(), "Agent introuvable.", false);
                                     String name = MineNorth.displayName(s, id);
-                                    data.agents.remove(id);
+                                    data.agents.remove(id); data.salaryOverride.remove(Etat.agentKey(id));
                                     data.log(name + " révoqué par " + c.getSource().getTextName());
                                     data.setDirty();
                                     ServerPlayer on = s.getPlayerList().getPlayer(id);
@@ -239,6 +245,20 @@ public final class EtatCommands {
         return say(src, "Salaire " + kind + (grade >= 0 ? " (grade " + (grade + 1) + ")" : "") + " : " + Etat.money(Etat.cents(euros)) + " par paie.", true);
     }
 
+    /** Salaire individuel d'un agent municipal (nom RP), dans la limite de salaire_max_euros (les OP n'ont pas de plafond). */
+    private static int setAgentSalary(CommandSourceStack src, String name, double euros) {
+        MinecraftServer s = src.getServer();
+        EtatData data = EtatData.get(s);
+        if (euros > EtatConfig.get().salaire_max_euros && !src.hasPermission(2))
+            return say(src, "Le salaire maximum autorisé est " + Etat.money(Etat.cents(EtatConfig.get().salaire_max_euros)) + ".", false);
+        UUID id = agentByName(data, s, name);
+        if (id == null) return say(src, "Agent introuvable.", false);
+        data.salaryOverride.put(Etat.agentKey(id), euros);
+        data.log("Salaire de " + MineNorth.displayName(s, id) + " fixé à " + Etat.money(Etat.cents(euros)) + " par " + src.getTextName());
+        data.setDirty();
+        return say(src, "Salaire de " + MineNorth.displayName(s, id) + " : " + Etat.money(Etat.cents(euros)) + " par paie.", true);
+    }
+
     private static void salaryReport(CommandSourceStack src) {
         MinecraftServer s = src.getServer();
         src.sendSystemMessage(Component.literal("§6— Salaires (toutes les " + EtatConfig.get().salaire_intervalle_minutes + " min) —"));
@@ -248,7 +268,10 @@ public final class EtatCommands {
         String[] sg = SalaryService.secoursGrades();
         for (int i = 0; i < sg.length; i++)
             src.sendSystemMessage(Component.literal("§7Pompiers " + (i + 1) + " · " + sg[i] + " : §f" + Etat.money(Etat.cents(Etat.salaryEuros(s, "pompier", i)))));
-        src.sendSystemMessage(Component.literal("§7Agents municipaux : §f" + Etat.money(Etat.cents(Etat.salaryEuros(s, "agent", -1)))));
+        src.sendSystemMessage(Component.literal("§7Maire : §f" + Etat.money(Etat.cents(Etat.salaryEuros(s, "maire", -1)))));
+        src.sendSystemMessage(Component.literal("§7Agents municipaux (commun) : §f" + Etat.money(Etat.cents(Etat.salaryEuros(s, "agent", -1)))));
+        for (UUID id : EtatData.get(s).agents.keySet())
+            src.sendSystemMessage(Component.literal("§7  Agent " + MineNorth.displayName(s, id) + " : §f" + Etat.money(Etat.cents(Etat.agentSalaryEuros(s, id)))));
     }
 
     private static void treasuryReport(CommandSourceStack src) {
