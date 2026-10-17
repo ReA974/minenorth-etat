@@ -4,7 +4,8 @@ import fr.minenorth.etat.Etat;
 import fr.minenorth.etat.TabletService;
 import fr.minenorth.etat.network.EtatNetwork;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.AbstractButton;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -15,8 +16,8 @@ import java.util.List;
 
 /** Tablette de la mairie : résumé, salaires, agents, élection. Le serveur revérifie chaque action. */
 public final class TabletScreen extends Screen {
-    private static final int W = 320, H = 236;
-    private static final int PANEL = 0xF00E0A34, BORDER = 0xFF2E2480, TEXT = 0xFFCFE3FF, DIM = 0xFF8FA8E0, OK = 0xFF5FE0A0, BAD = 0xFFFF5F6B, WHITE = 0xFFFFFFFF;
+    private static final int W = 380, H = 244;
+    private static final int PANEL = 0xFF161048, BORDER = 0xFF0E0E10, TEXT = 0xFFCFE3FF, DIM = 0xFF8FA8E0, OK = 0xFF5FE0A0, BAD = 0xFFFF5F6B, WHITE = 0xFFFFFFFF;
     private static final String[] TABS = {"Résumé", "Salaires", "Agents", "Élection", "Lois", "Annonce"};
 
     private EtatNetwork.TabletState state;
@@ -38,8 +39,8 @@ public final class TabletScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mx, double my, double delta) {
-        if (tab == 1 && state.salaries().size() > 6) {
-            int max = state.salaries().size() - 6;
+        if (tab == 1 && state.salaries().size() > 5) {
+            int max = state.salaries().size() - 5;
             int next = Math.max(0, Math.min(max, salaryScroll - (int) Math.signum(delta)));
             if (next != salaryScroll) { salaryScroll = next; rebuildWidgets(); }
             return true;
@@ -50,7 +51,7 @@ public final class TabletScreen extends Screen {
     private boolean mayor() { return state.role() == TabletService.ROLE_MAYOR && !state.locked(); }
     private boolean staff() { return state.role() != TabletService.ROLE_NONE && !state.locked(); }
     private int left() { return (width - W) / 2; }
-    private int top() { return (height - H) / 2; }
+    private int top() { return Math.max(0, (height - H) / 2); }
 
     private void act(String cmd, String a, String b) {
         EtatNetwork.CHANNEL.sendToServer(new EtatNetwork.TabletAction(cmd, a, b));
@@ -64,19 +65,58 @@ public final class TabletScreen extends Screen {
         return addRenderableWidget(e);
     }
 
-    private Button button(int x, int y, int w, String label, Runnable r, boolean active) {
-        Button b = addRenderableWidget(Button.builder(Component.literal(label), x0 -> r.run()).bounds(x, y, w, 18).build());
-        b.active = active;
-        return b;
+    /** Bouton arrondi : vert = valider, rose = supprimer / annuler, violet = choix neutre, cyan = onglet ouvert. */
+    private Btn button(int x, int y, int w, String label, Runnable r, boolean active) {
+        int color = label.startsWith("Révoquer") || label.startsWith("Abroger") || label.equals("Annuler") ? 0xFFC83CF0 : 0xFF1E9E52;
+        return addRenderableWidget(new Btn(x, y, w, 20, label, color, r, active));
+    }
+
+    private Btn tabButton(int x, int y, int w, String label, boolean open, Runnable r) {
+        return addRenderableWidget(new Btn(x, y, w, 22, label, open ? 0xFF20AAEB : 0xFF4A3CB4, r, true));
+    }
+
+    private static void rfill(GuiGraphics g, int x1, int y1, int x2, int y2, int r, int c) {
+        r = Math.max(0, Math.min(r, Math.min(x2 - x1, y2 - y1) / 2));
+        g.fill(x1, y1 + r, x2, y2 - r, c);
+        for (int i = 0; i < r; i++) {
+            double dy = r - i - 0.5;
+            int inset = r - (int) Math.round(Math.sqrt(r * (double) r - dy * dy));
+            g.fill(x1 + inset, y1 + i, x2 - inset, y1 + i + 1, c);
+            g.fill(x1 + inset, y2 - i - 1, x2 - inset, y2 - i, c);
+        }
+    }
+
+    private static final class Btn extends AbstractButton {
+        private final Runnable action;
+        private final int color;
+        Btn(int x, int y, int w, int h, String label, int color, Runnable action, boolean active) {
+            super(x, y, w, h, Component.literal(label));
+            this.action = action;
+            this.color = color;
+            this.active = active;
+        }
+        @Override public void onPress() { if (active) action.run(); }
+        @Override protected void updateWidgetNarration(NarrationElementOutput out) { defaultButtonNarrationText(out); }
+        @Override public void renderWidget(GuiGraphics g, int mx, int my, float pt) {
+            int c = color;
+            if (isHoveredOrFocused() && active) {
+                int r = Math.min(255, ((c >> 16) & 255) + 35), gg = Math.min(255, ((c >> 8) & 255) + 35), b = Math.min(255, (c & 255) + 35);
+                c = 0xFF000000 | (r << 16) | (gg << 8) | b;
+            }
+            rfill(g, getX(), getY(), getX() + width, getY() + height, 5, active ? c : 0xFF2A2468);
+            var font = net.minecraft.client.Minecraft.getInstance().font;
+            String t = font.plainSubstrByWidth(getMessage().getString(), width - 8);
+            g.drawString(font, t, getX() + width / 2 - font.width(t) / 2, getY() + (height - 8) / 2, active ? WHITE : DIM, false);
+        }
     }
 
     @Override
     protected void init() {
         int x = left(), y = top();
-        int tw = (W - 16) / TABS.length;
+        int tw = (W - 16 - 4 * (TABS.length - 1)) / TABS.length;
         for (int i = 0; i < TABS.length; i++) {
             final int t = i;
-            Button b = button(x + 8 + i * tw, y + 24, tw - 2, TABS[i], () -> { tab = t; rebuildWidgets(); }, tab != i);
+            tabButton(x + 8 + i * (tw + 4), y + 26, tw, TABS[i], tab == i, () -> { tab = t; rebuildWidgets(); });
         }
         box1 = box2 = null;
         int cy = y + 52;
@@ -91,17 +131,17 @@ public final class TabletScreen extends Screen {
             }
             case 1 -> {
                 List<String> rows = state.salaries();
-                salaryScroll = Math.max(0, Math.min(salaryScroll, Math.max(0, rows.size() - 6)));
-                for (int i = 0; i < Math.min(6, rows.size() - salaryScroll); i++) {
+                salaryScroll = Math.max(0, Math.min(salaryScroll, Math.max(0, rows.size() - 5)));
+                for (int i = 0; i < Math.min(5, rows.size() - salaryScroll); i++) {
                     final int idx = salaryScroll + i;
                     String[] r = rows.get(idx).split("\\|");
-                    button(x + 8, cy + i * 20, W - 16, r[1] + " : " + Etat.money(Etat.cents(parse(r[2]))),
-                            () -> { selectedSalary = idx; rebuildWidgets(); }, mayor() && selectedSalary != idx);
+                    tabButton(x + 8, cy + i * 24, W - 16, r[1] + " : " + Etat.money(Etat.cents(parse(r[2]))),
+                            selectedSalary == idx, () -> { selectedSalary = idx; rebuildWidgets(); }).active = mayor();
                 }
                 if (mayor() && selectedSalary >= 0 && selectedSalary < rows.size()) {
                     String key = rows.get(selectedSalary).split("\\|")[0];
-                    box1 = edit(x + 8, y + 180, 80, "Euros", "");
-                    button(x + 92, y + 180, 150, "Fixer le salaire", () -> act("salary", key, box1.getValue()), true);
+                    box1 = edit(x + 8, y + 195, 80, "Euros", "");
+                    button(x + 92, y + 194, 150, "Fixer le salaire", () -> act("salary", key, box1.getValue()), true);
                 }
             }
             case 2 -> {
@@ -109,7 +149,7 @@ public final class TabletScreen extends Screen {
                 for (int i = 0; i < Math.min(5, agents.size()); i++) {
                     String[] r = agents.get(i).split("\\|", 3);
                     final String id = r[0];
-                    button(x + W - 88, cy + i * 20, 80, "Révoquer", () -> act("revoke", id, ""), mayor());
+                    button(x + W - 88, cy + i * 20, 80, "Révoquer", () -> act("revoke", id, ""), mayor()).setHeight(19);
                 }
                 if (mayor()) {
                     box1 = edit(x + 8, y + 170, 110, "Pseudo Minecraft", "");
@@ -136,7 +176,7 @@ public final class TabletScreen extends Screen {
                 List<String> laws = state.laws();
                 for (int i = 0; i < Math.min(4, laws.size()); i++) {
                     final String num = laws.get(i).split("\\|", 5)[0];
-                    button(x + W - 76, cy + i * 18, 68, "Abroger", () -> act("law_repeal", num, ""), mayor());
+                    button(x + W - 76, cy + i * 18, 68, "Abroger", () -> act("law_repeal", num, ""), mayor()).setHeight(17);
                 }
                 if (mayor()) {
                     box1 = edit(x + 8, y + 132, W - 16, "Titre de la loi", "");
@@ -146,7 +186,7 @@ public final class TabletScreen extends Screen {
                 }
             }
         }
-        button(x + W / 2 - 40, y + H - 26, 80, "Fermer", this::onClose, true);
+        button(x + W / 2 - 50, y + H - 28, 100, "Fermer", this::onClose, true);
     }
 
     private static double parse(String v) {
@@ -157,9 +197,9 @@ public final class TabletScreen extends Screen {
     public void render(GuiGraphics g, int mx, int my, float pt) {
         renderBackground(g);
         int x = left(), y = top();
-        g.fill(x - 1, y - 1, x + W + 1, y + H + 1, BORDER);
-        g.fill(x, y, x + W, y + H, PANEL);
-        g.drawCenteredString(font, "§lMAIRIE", x + W / 2, y + 8, WHITE);
+        rfill(g, x - 3, y - 3, x + W + 3, y + H + 3, 9, BORDER);
+        rfill(g, x, y, x + W, y + H, 7, PANEL);
+        g.drawCenteredString(font, "§lTABLETTE DE LA MAIRIE", x + W / 2, y + 8, WHITE);
         g.drawString(font, state.role() == TabletService.ROLE_MAYOR ? "Maire" : "Agent", x + 8, y + 8, DIM, false);
         if (state.locked()) g.drawString(font, "Pouvoirs suspendus : lecture seule", x + 8, y + 18, BAD, false);
         int cy = y + 52;
@@ -179,9 +219,9 @@ public final class TabletScreen extends Screen {
                 }
             }
             case 1 -> {
-                if (state.salaries().size() > 6) g.drawString(font, "(" + (salaryScroll + 1) + " à " + Math.min(state.salaries().size(), salaryScroll + 6) + " sur " + state.salaries().size() + " postes : molette pour défiler)", x + 8, y + 172, DIM, false);
-                if (!mayor()) g.drawString(font, "Seul le maire peut modifier les salaires.", x + 8, y + 184, DIM, false);
-                else if (selectedSalary < 0) g.drawString(font, "Choisissez un poste pour changer son salaire.", x + 8, y + 184, DIM, false);
+                if (state.salaries().size() > 5) g.drawString(font, "(" + (salaryScroll + 1) + " à " + Math.min(state.salaries().size(), salaryScroll + 5) + " sur " + state.salaries().size() + " postes : molette pour défiler)", x + 8, y + 176, DIM, false);
+                if (!mayor()) g.drawString(font, "Seul le maire peut modifier les salaires.", x + 8, y + 188, DIM, false);
+                else if (selectedSalary < 0) g.drawString(font, "Choisissez un poste pour changer son salaire.", x + 8, y + 188, DIM, false);
             }
             case 2 -> {
                 if (state.agents().isEmpty()) g.drawString(font, "Aucun agent municipal.", x + 8, cy + 4, DIM, false);
@@ -219,7 +259,7 @@ public final class TabletScreen extends Screen {
                 }
             }
         }
-        if (!state.message().isEmpty()) g.drawCenteredString(font, state.message(), x + W / 2, y + H - 40, state.ok() ? OK : BAD);
+        if (!state.message().isEmpty()) g.drawCenteredString(font, state.message(), x + W / 2, y + H - 42, state.ok() ? OK : BAD);
         super.render(g, mx, my, pt);
     }
 
