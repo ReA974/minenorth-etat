@@ -87,6 +87,7 @@ public final class SalaryService {
             if (!bank.refund(s, w.id(), cents, "etat:salaire")) continue;
             d.balance -= cents;
             total += cents;
+            Etat.withholdSalary(s, w.id(), cents);
             paid++;
             p.sendSystemMessage(Component.literal("§a[État] Salaire de " + w.label() + " : " + Etat.money(cents) + " versés sur votre compte."));
         }

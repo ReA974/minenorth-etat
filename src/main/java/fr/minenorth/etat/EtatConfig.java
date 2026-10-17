@@ -38,6 +38,8 @@ public final class EtatConfig {
     public int agents_max = 10;
     /** Impôt sur le compte des joueurs connectés : % de ce qui dépasse la franchise, prélevé à chaque intervalle (0 = désactivé). */
     public double impot_compte_pourcent = 1.0;
+    /** Impôt sur le salaire : % retenu sur chaque salaire reçu (de l'État ou d'une entreprise), versé au trésor. 0 = désactivé ; modifiable en jeu par l'admin. */
+    public double impot_salaire_pourcent = 0.0;
     /** Plafond que le maire ne peut pas dépasser pour cet impôt. */
     public double impot_compte_max_pourcent = 5.0;
     /** Solde en dessous duquel rien n'est prélevé, en euros. */
@@ -72,6 +74,7 @@ public final class EtatConfig {
         c.impot_compte_max_pourcent = Math.max(0, Math.min(100, c.impot_compte_max_pourcent));
         c.impot_compte_pourcent = Math.max(0, Math.min(100, c.impot_compte_pourcent));
         c.impot_compte_franchise_euros = Math.max(0, c.impot_compte_franchise_euros);
+        c.impot_salaire_pourcent = Math.max(0, Math.min(100, c.impot_salaire_pourcent));
         c.impot_compte_intervalle_minutes = Math.max(1, c.impot_compte_intervalle_minutes);
         c.election_duree_minutes = Math.max(1, c.election_duree_minutes);
         // On ne réécrit pas un fichier illisible : l'admin peut ainsi corriger sa faute de frappe.

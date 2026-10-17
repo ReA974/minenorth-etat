@@ -23,6 +23,30 @@ public final class Etat {
         return o >= 0 ? o : EtatConfig.get().impot_compte_pourcent;
     }
 
+    /** Impôt sur le salaire, en % de chaque salaire reçu. */
+    public static double salaryTaxPercent(MinecraftServer s) {
+        double o = EtatData.get(s).salaryTaxOverride;
+        return o >= 0 ? o : EtatConfig.get().impot_salaire_pourcent;
+    }
+
+    /**
+     * Retient l'impôt sur un salaire de {@code gross} centimes déjà versé au joueur : prélevé sur son compte (source « etat: », non imposée une
+     * seconde fois) et versé au trésor. Renvoie le montant retenu (0 si désactivé ou si le prélèvement échoue).
+     */
+    public static long withholdSalary(MinecraftServer s, UUID id, long gross) {
+        double pct = salaryTaxPercent(s);
+        if (pct <= 0 || gross <= 0) return 0;
+        long tax = Math.round(gross * pct / 100.0);
+        if (tax <= 0 || !MineNorth.bank().debit(s, id, tax, "etat:impot_salaire", false).ok()) return 0;
+        EtatData d = EtatData.get(s);
+        d.balance += tax;
+        d.addSource("etat:impot_salaire", tax);
+        d.setDirty();
+        ServerPlayer p = s.getPlayerList().getPlayer(id);
+        if (p != null) p.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6[Impôts] §fImpôt sur le salaire : §c-" + money(tax) + "§f (" + percent(pct) + ")."));
+        return tax;
+    }
+
     /** kind : "police", "pompier" (grade >= 0) ou "agent" (grade ignoré). Euros par paie. */
     public static double salaryEuros(MinecraftServer s, String kind, int grade) {
         Double o = EtatData.get(s).salaryOverride.get(salaryKey(kind, grade));

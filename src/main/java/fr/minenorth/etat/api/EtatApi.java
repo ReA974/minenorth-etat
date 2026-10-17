@@ -71,6 +71,29 @@ public final class EtatApi {
         return "Impôt sur le compte remis à " + Etat.percent(Etat.wealthPercent(s)) + " (config).";
     }
 
+    /** Impôt sur le salaire (% retenu sur chaque salaire reçu), valeur de la config ou fixée par l'admin. */
+    public static double salaryTaxPercent(MinecraftServer s) { return Etat.salaryTaxPercent(s); }
+
+    public static String setSalaryTaxPercent(MinecraftServer s, double percent) {
+        if (percent < 0 || percent > 100) return "L'impôt doit être entre 0 et 100 %.";
+        EtatData d = EtatData.get(s);
+        d.salaryTaxOverride = percent;
+        d.setDirty();
+        d.log("Impôt sur le salaire fixé à " + Etat.percent(percent) + " (admin)");
+        return "Impôt sur le salaire fixé à " + Etat.percent(percent) + ".";
+    }
+
+    public static String resetSalaryTaxPercent(MinecraftServer s) {
+        EtatData d = EtatData.get(s);
+        d.salaryTaxOverride = -1;
+        d.setDirty();
+        d.log("Impôt sur le salaire remis à la valeur de la config (admin)");
+        return "Impôt sur le salaire remis à " + Etat.percent(Etat.salaryTaxPercent(s)) + " (config).";
+    }
+
+    /** Appelé par le mod Entreprises (réflexion) après le versement d'un salaire : retient l'impôt. Renvoie le montant retenu, en centimes. */
+    public static long withholdSalary(MinecraftServer s, UUID player, long grossCents) { return Etat.withholdSalary(s, player, grossCents); }
+
     /** Uuid du maire, ou null. */
     public static UUID mayor(MinecraftServer s) { return EtatData.get(s).mayor; }
 
