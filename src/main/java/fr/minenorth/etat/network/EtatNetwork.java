@@ -37,12 +37,12 @@ public final class EtatNetwork {
     private static final Set<UUID> OPEN = new HashSet<>();
 
     public static void register() {
-        CHANNEL.registerMessage(id++, StatePacket.class, StatePacket::encode, StatePacket::decode, StatePacket::handle);
-        CHANNEL.registerMessage(id++, ActionPacket.class, ActionPacket::encode, ActionPacket::decode, ActionPacket::handle);
-        CHANNEL.registerMessage(id++, TabletState.class, TabletState::encode, TabletState::decode, TabletState::handle);
-        CHANNEL.registerMessage(id++, TabletAction.class, TabletAction::encode, TabletAction::decode, TabletAction::handle);
-        CHANNEL.registerMessage(id++, LawsPacket.class, LawsPacket::encode, LawsPacket::decode, LawsPacket::handle);
-        CHANNEL.registerMessage(id++, LawTitlesPacket.class, LawTitlesPacket::encode, LawTitlesPacket::decode, LawTitlesPacket::handle);
+        CHANNEL.registerMessage(id++, StatePacket.class, StatePacket::encode, StatePacket::decode, StatePacket::handle, java.util.Optional.of(net.minecraftforge.network.NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id++, ActionPacket.class, ActionPacket::encode, ActionPacket::decode, ActionPacket::handle, java.util.Optional.of(net.minecraftforge.network.NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(id++, TabletState.class, TabletState::encode, TabletState::decode, TabletState::handle, java.util.Optional.of(net.minecraftforge.network.NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id++, TabletAction.class, TabletAction::encode, TabletAction::decode, TabletAction::handle, java.util.Optional.of(net.minecraftforge.network.NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(id++, LawsPacket.class, LawsPacket::encode, LawsPacket::decode, LawsPacket::handle, java.util.Optional.of(net.minecraftforge.network.NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id++, LawTitlesPacket.class, LawTitlesPacket::encode, LawTitlesPacket::decode, LawTitlesPacket::handle, java.util.Optional.of(net.minecraftforge.network.NetworkDirection.PLAY_TO_CLIENT));
     }
 
     /** Ouvre l'écran du bureau de vote chez ce joueur. */

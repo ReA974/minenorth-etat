@@ -21,6 +21,8 @@ public class WalletMenu extends AbstractContainerMenu {
 
     private final InteractionHand hand;
     private final Player player;
+    /** Pile EXACTE ouverte (serveur) : si le joueur change de case sélectionnée, jette ou remplace son portefeuille, le menu se ferme au lieu d'écrire dans un autre. */
+    private final ItemStack walletStack;
     private boolean loading;
     private final ItemStackHandler handler = new ItemStackHandler(SIZE) {
         @Override
@@ -43,6 +45,7 @@ public class WalletMenu extends AbstractContainerMenu {
         super(WalletRegistry.WALLET_MENU.get(), id);
         this.hand = hand;
         this.player = inv.player;
+        this.walletStack = player.getItemInHand(hand);
 
         // Chargement du contenu stocké dans l'item (sans déclencher de sauvegarde)
         ItemStack wallet = player.getItemInHand(hand);
@@ -79,14 +82,32 @@ public class WalletMenu extends AbstractContainerMenu {
 
     private void save() {
         if (loading || player.level().isClientSide) return;
-        ItemStack wallet = player.getItemInHand(hand);
-        if (wallet.is(WalletRegistry.WALLET.get())) {
-            wallet.getOrCreateTag().put("Items", handler.serializeNBT().getList("Items", 10));
+        if (walletStack.is(WalletRegistry.WALLET.get()) && player.getItemInHand(hand) == walletStack) {
+            walletStack.getOrCreateTag().put("Items", handler.serializeNBT().getList("Items", 10));
         }
+    }
+
+    /**
+     * Le NBT du portefeuille fait foi, pas la copie en mémoire du menu : un distributeur, une boutique ou un autre mod peut avoir pris des
+     * billets dans l'objet pendant que le menu était ouvert (un client modifié peut envoyer ces paquets sans fermer le menu). Avant chaque
+     * clic, le contenu est relu depuis l'objet : un billet déjà pris ne peut plus être récupéré une seconde fois.
+     */
+    private void reloadFromItem() {
+        CompoundTag stored = walletStack.getTag();
+        CompoundTag tag = new CompoundTag();
+        tag.put("Items", stored != null && stored.contains("Items") ? stored.getList("Items", 10) : new net.minecraft.nbt.ListTag());
+        tag.putInt("Size", SIZE);
+        loading = true;
+        handler.deserializeNBT(tag);
+        loading = false;
     }
 
     @Override
     public void clicked(int slotId, int button, ClickType type, Player p) {
+        if (!player.level().isClientSide) {
+            if (!stillValid(p)) return;
+            reloadFromItem();
+        }
         // pas de prise du portefeuille ouvert (clic, touche numérique)
         if (slotId >= 0 && slotId < slots.size() && isWallet(slots.get(slotId))) return;
         if (type == ClickType.SWAP && button >= 0 && button < 9 && isWallet(slots.get(slots.size() - 9 + button))) return;
@@ -95,7 +116,9 @@ public class WalletMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player p) {
-        return p.getItemInHand(hand).is(WalletRegistry.WALLET.get());
+        ItemStack inHand = p.getItemInHand(hand);
+        if (!inHand.is(WalletRegistry.WALLET.get())) return false;
+        return p.level().isClientSide || inHand == walletStack;
     }
 
     @Override
