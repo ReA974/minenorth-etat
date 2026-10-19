@@ -11,12 +11,6 @@ import java.util.UUID;
 public final class Etat {
     private Etat() {}
 
-    /** Impôt en % de chaque achat. */
-    public static double taxPercent(MinecraftServer s) {
-        double o = EtatData.get(s).taxOverride;
-        return o >= 0 ? o : EtatConfig.get().impot_pourcent;
-    }
-
     /** Impôt sur le compte des joueurs connectés, en % du solde au-dessus de la franchise. */
     public static double wealthPercent(MinecraftServer s) {
         double o = EtatData.get(s).wealthOverride;

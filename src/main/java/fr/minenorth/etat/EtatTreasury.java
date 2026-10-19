@@ -6,9 +6,8 @@ import net.minecraft.server.MinecraftServer;
 import java.util.Map;
 
 /**
- * Trésor de l'État. Chaque somme encaissée par un mod (achat, amende…) passe ici : seul l'IMPÔT (un pourcentage
- * réglable) alimente le solde dépensable ; Core garde les statistiques de la totalité.
- * Les opérations de l'État lui-même (source « etat:… », salaires, dépenses) ne sont pas imposées.
+ * Trésor de l'État. Chaque somme encaissée par un mod (achat, amende…) passe ici pour les statistiques de Core ; l'État ne prélève PLUS d'impôt sur les achats
+ * (le trésor est alimenté par l'impôt sur le compte et l'impôt sur le salaire).
  */
 public final class EtatTreasury implements Treasury {
     private final Treasury stats;
@@ -18,13 +17,7 @@ public final class EtatTreasury implements Treasury {
     @Override
     public void collect(MinecraftServer s, long cents, String source) {
         stats.collect(s, cents, source);
-        if (source != null && source.startsWith("etat:")) return;
-        long tax = Math.round(cents * Etat.taxPercent(s) / 100.0);   // un remboursement (cents < 0) reprend sa part
-        if (tax == 0) return;
-        EtatData d = EtatData.get(s);
-        d.balance += tax;
-        d.addSource(source == null ? "?" : source, tax);
-        d.setDirty();
+        // plus d'impôt sur les achats : seuls l'impôt sur le compte et l'impôt sur le salaire alimentent le trésor (voir WealthTaxService, Etat.withholdSalary)
     }
 
     @Override

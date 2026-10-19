@@ -40,7 +40,6 @@ public class EtatData extends SavedData {
     public final Map<UUID, UUID> votes = new LinkedHashMap<>();
 
     /** Réglages en jeu ; absents = valeur de la config. */
-    public double taxOverride = -1;
     public final Map<String, Double> salaryOverride = new LinkedHashMap<>();
     public long lastPay;
     public double wealthOverride = -1;
@@ -95,7 +94,6 @@ public class EtatData extends SavedData {
             CompoundTag c = (CompoundTag) t;
             d.votes.put(c.getUUID("voter"), c.getUUID("for"));
         }
-        d.taxOverride = tag.contains("taxOverride") ? tag.getDouble("taxOverride") : -1;
         for (Tag t : tag.getList("salaries", Tag.TAG_COMPOUND)) {
             CompoundTag c = (CompoundTag) t;
             d.salaryOverride.put(c.getString("k"), c.getDouble("v"));
@@ -136,7 +134,6 @@ public class EtatData extends SavedData {
         ListTag vl = new ListTag();
         votes.forEach((v, f) -> { CompoundTag c = new CompoundTag(); c.putUUID("voter", v); c.putUUID("for", f); vl.add(c); });
         tag.put("votes", vl);
-        if (taxOverride >= 0) tag.putDouble("taxOverride", taxOverride);
         ListTag sal = new ListTag();
         salaryOverride.forEach((k, v) -> { CompoundTag c = new CompoundTag(); c.putString("k", k); c.putDouble("v", v); sal.add(c); });
         tag.put("salaries", sal);

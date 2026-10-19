@@ -108,7 +108,6 @@ public final class EtatCommands {
                     else src.sendSystemMessage(Component.literal("§7Maire : §f" + MineNorth.displayName(s, data.mayor)
                             + (data.mayorUntil > 0 ? " §7(mandat : encore " + ElectionService.duration(data.mayorUntil - System.currentTimeMillis()) + ")" : "")));
                     if (data.mayorLocked) src.sendSystemMessage(Component.literal("§cPouvoirs du maire suspendus par un administrateur."));
-                    src.sendSystemMessage(Component.literal("§7Impôt sur les achats : §f" + Etat.percent(Etat.taxPercent(s))));
                     src.sendSystemMessage(Component.literal("§7Élection : §f" + (data.electionOpen
                             ? "en cours, fin dans " + ElectionService.duration(data.electionEnd - System.currentTimeMillis()) : "aucune")));
                     return 1;
@@ -145,18 +144,6 @@ public final class EtatCommands {
                     treasuryReport(c.getSource());
                     return 1;
                 }))
-                .then(Commands.literal("impot")
-                        .then(Commands.argument("pourcent", DoubleArgumentType.doubleArg(0, 100)).executes(c -> {
-                            MinecraftServer s = c.getSource().getServer();
-                            double p = DoubleArgumentType.getDouble(c, "pourcent");
-                            double max = EtatConfig.get().impot_max_pourcent;
-                            if (p > max && !c.getSource().hasPermission(2)) return say(c.getSource(), "Le maximum autorisé est " + Etat.percent(max) + ".", false);
-                            EtatData data = EtatData.get(s);
-                            data.taxOverride = p;
-                            data.setDirty();
-                            data.log("Impôt fixé à " + Etat.percent(p) + " par " + c.getSource().getTextName());
-                            return say(c.getSource(), "Impôt sur les achats fixé à " + Etat.percent(p) + ".", true);
-                        })))
                 .then(Commands.literal("salaire")
                         .then(Commands.literal("liste").executes(c -> {
                             salaryReport(c.getSource());
@@ -278,7 +265,7 @@ public final class EtatCommands {
         MinecraftServer s = src.getServer();
         EtatData data = EtatData.get(s);
         src.sendSystemMessage(Component.literal("§6— Trésor —"));
-        src.sendSystemMessage(Component.literal("§7Solde : §f" + Etat.money(data.balance) + " §7· impôt : §f" + Etat.percent(Etat.taxPercent(s))));
+        src.sendSystemMessage(Component.literal("§7Solde : §f" + Etat.money(data.balance)));
         data.sources.entrySet().stream().sorted((a, b) -> Long.compare(b.getValue(), a.getValue())).limit(8)
                 .forEach(en -> src.sendSystemMessage(Component.literal("§7 - " + en.getKey() + " : §f" + Etat.money(en.getValue()))));
         SimpleDateFormat fmt = new SimpleDateFormat("dd/MM HH:mm");
@@ -329,21 +316,6 @@ public final class EtatCommands {
                             EtatData.get(c.getSource().getServer()).log(MineNorth.displayName(p) + " nommé maire par " + c.getSource().getTextName());
                             p.sendSystemMessage(Component.literal("§6[Mairie] Vous êtes maire. /maire pour gérer la ville."));
                             return say(c.getSource(), MineNorth.displayName(p) + " est maintenant maire.", true);
-                        })))
-                .then(Commands.literal("impot")
-                        .then(Commands.literal("reset").executes(c -> {
-                            EtatData data = EtatData.get(c.getSource().getServer());
-                            data.taxOverride = -1;
-                            data.setDirty();
-                            return say(c.getSource(), "Impôt remis à " + Etat.percent(Etat.taxPercent(c.getSource().getServer())) + " (config).", true);
-                        }))
-                        .then(Commands.argument("pourcent", DoubleArgumentType.doubleArg(0, 100)).executes(c -> {
-                            EtatData data = EtatData.get(c.getSource().getServer());
-                            double p = DoubleArgumentType.getDouble(c, "pourcent");
-                            data.taxOverride = p;
-                            data.log("Impôt fixé à " + Etat.percent(p) + " par " + c.getSource().getTextName());
-                            data.setDirty();
-                            return say(c.getSource(), "Impôt fixé à " + Etat.percent(p) + ".", true);
                         })))
                 .then(Commands.literal("tresor")
                         .then(Commands.literal("ajouter").then(Commands.argument("euros", DoubleArgumentType.doubleArg(0.01)).executes(c -> adjust(c.getSource(), DoubleArgumentType.getDouble(c, "euros")))))

@@ -18,9 +18,7 @@ public final class EtatConfig {
     private static EtatConfig current = new EtatConfig();
 
     /** Impôt : part de CHAQUE achat (en %) qui va au trésor de l'État. */
-    public double impot_pourcent = 2.0;
     /** Plafond que le maire ne peut pas dépasser (l'admin peut aller au-delà via /etat ou le menu admin). */
-    public double impot_max_pourcent = 10.0;
     /** Salaire par grade, du plus haut (index 0) au plus bas, en euros par paie. */
     public double[] salaire_police_euros = {300, 200, 100};
     public double[] salaire_pompier_euros = {300, 200, 100};
@@ -67,8 +65,6 @@ public final class EtatConfig {
         EtatConfig d = new EtatConfig(), c = current;
         if (c.salaire_police_euros == null || c.salaire_police_euros.length == 0) c.salaire_police_euros = d.salaire_police_euros;
         if (c.salaire_pompier_euros == null || c.salaire_pompier_euros.length == 0) c.salaire_pompier_euros = d.salaire_pompier_euros;
-        c.impot_max_pourcent = Math.max(0, Math.min(100, c.impot_max_pourcent));
-        c.impot_pourcent = Math.max(0, Math.min(100, c.impot_pourcent));
         c.salaire_intervalle_minutes = Math.max(1, c.salaire_intervalle_minutes);
         c.agents_max = Math.max(0, c.agents_max);
         c.impot_compte_max_pourcent = Math.max(0, Math.min(100, c.impot_compte_max_pourcent));

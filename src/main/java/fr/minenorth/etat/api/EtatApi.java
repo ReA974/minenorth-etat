@@ -18,31 +18,6 @@ public final class EtatApi {
     /** Solde dépensable du trésor, en centimes. */
     public static long balance(MinecraftServer s) { return EtatData.get(s).balance; }
 
-    /** Impôt en cours, en % de chaque achat. */
-    public static double taxPercent(MinecraftServer s) { return Etat.taxPercent(s); }
-
-    /** Plafond de la config pour le maire. */
-    public static double taxMaxPercent() { return EtatConfig.get().impot_max_pourcent; }
-
-    /** Fixe l'impôt (admin : pas de plafond, 0..100). Renvoie le message de résultat. */
-    public static String setTaxPercent(MinecraftServer s, double percent) {
-        if (percent < 0 || percent > 100) return "L'impôt doit être entre 0 et 100 %.";
-        EtatData d = EtatData.get(s);
-        d.taxOverride = percent;
-        d.setDirty();
-        d.log("Impôt fixé à " + Etat.percent(percent) + " (admin)");
-        return "Impôt fixé à " + Etat.percent(percent) + ".";
-    }
-
-    /** Revient à la valeur de la config. */
-    public static String resetTaxPercent(MinecraftServer s) {
-        EtatData d = EtatData.get(s);
-        d.taxOverride = -1;
-        d.setDirty();
-        d.log("Impôt remis à la valeur de la config (admin)");
-        return "Impôt remis à " + Etat.percent(Etat.taxPercent(s)) + " (config).";
-    }
-
     /** Impôt sur le compte des joueurs connectés (% du solde au-dessus de la franchise), plafond du maire, franchise (euros) et intervalle (minutes). */
     public static double wealthPercent(MinecraftServer s) { return Etat.wealthPercent(s); }
 

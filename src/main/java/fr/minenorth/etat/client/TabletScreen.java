@@ -123,10 +123,8 @@ public final class TabletScreen extends Screen {
         switch (tab) {
             case 0 -> {
                 if (mayor()) {
-                    box1 = edit(x + 8, y + 112, 80, "Impôt en %", Etat.percent(state.tax()).replace(" %", ""));
-                    button(x + 92, y + 112, 150, "Fixer l'impôt (achats)", () -> act("tax", box1.getValue(), ""), true);
-                    box2 = edit(x + 8, y + 134, 80, "Compte en %", Etat.percent(state.wealthTax()).replace(" %", ""));
-                    button(x + 92, y + 134, 150, "Fixer l'impôt (comptes)", () -> act("wtax", box2.getValue(), ""), true);
+                    box2 = edit(x + 8, y + 112, 80, "Compte en %", Etat.percent(state.wealthTax()).replace(" %", ""));
+                    button(x + 92, y + 112, 150, "Fixer l'impôt (comptes)", () -> act("wtax", box2.getValue(), ""), true);
                 }
             }
             case 1 -> {
@@ -206,9 +204,8 @@ public final class TabletScreen extends Screen {
         switch (tab) {
             case 0 -> {
                 g.drawString(font, "Trésor : " + Etat.money(state.balance()), x + 8, cy, OK, false);
-                g.drawString(font, "Impôt sur les achats : " + Etat.percent(state.tax()) + " (max " + Etat.percent(state.taxMax()) + ")", x + 8, cy + 12, TEXT, false);
-                g.drawString(font, state.mayor().isEmpty() ? "Maire : personne" : "Maire : " + state.mayor(), x + 8, cy + 24, TEXT, false);
-                g.drawString(font, "Impôt sur les comptes : " + Etat.percent(state.wealthTax()) + " (max " + Etat.percent(state.wealthTaxMax()) + ")", x + 8, cy + 36, TEXT, false);
+                g.drawString(font, state.mayor().isEmpty() ? "Maire : personne" : "Maire : " + state.mayor(), x + 8, cy + 12, TEXT, false);
+                g.drawString(font, "Impôt sur les comptes : " + Etat.percent(state.wealthTax()) + " (max " + Etat.percent(state.wealthTaxMax()) + ")", x + 8, cy + 24, TEXT, false);
                 SimpleDateFormat fmt = new SimpleDateFormat("dd/MM HH:mm");
                 int ly = y + 160;
                 for (int i = 0; i < Math.min(3, state.ledger().size()); i++) {

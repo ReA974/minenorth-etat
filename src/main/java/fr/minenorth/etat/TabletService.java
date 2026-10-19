@@ -53,7 +53,7 @@ public final class TabletService {
         for (int i = d.ledger.size() - 1; i >= 0 && ledger.size() < 8; i--) ledger.add(d.ledger.get(i));
         int seconds = d.electionOpen ? (int) Math.max(0, (d.electionEnd - System.currentTimeMillis()) / 1000) : 0;
         EtatNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> p), new EtatNetwork.TabletState(
-                role, locked(p), d.balance, Etat.taxPercent(s), EtatConfig.get().impot_max_pourcent,
+                role, locked(p), d.balance,
                 d.mayor == null ? "" : MineNorth.displayName(s, d.mayor), d.electionOpen, seconds, d.candidates.size(), d.votes.size(),
                 salaries, agents, ledger, LawService.rows(d), message, ok, Etat.wealthPercent(s), EtatConfig.get().impot_compte_max_pourcent));
     }
@@ -86,21 +86,6 @@ public final class TabletService {
             case "announce" -> {
                 if (!mayor) error = "Réservé au maire.";
                 else { error = announce(p, a, b); done = "Annonce diffusée à toute la ville."; }
-            }
-            case "tax" -> {
-                if (!mayor) error = "Réservé au maire.";
-                else {
-                    double v = parseDouble(a);
-                    double max = EtatConfig.get().impot_max_pourcent;
-                    if (Double.isNaN(v) || v < 0 || v > 100) error = "Impôt invalide (0 à 100 %).";
-                    else if (v > max && !p.hasPermissions(2)) error = "Le maximum autorisé est " + Etat.percent(max) + ".";
-                    else {
-                        d.taxOverride = v;
-                        d.log("Impôt fixé à " + Etat.percent(v) + " par " + who);
-                        d.setDirty();
-                        done = "Impôt fixé à " + Etat.percent(v) + ".";
-                    }
-                }
             }
             case "wtax" -> {
                 if (!mayor) error = "Réservé au maire.";
