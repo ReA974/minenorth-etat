@@ -55,7 +55,8 @@ public final class TabletService {
         EtatNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> p), new EtatNetwork.TabletState(
                 role, locked(p), d.balance,
                 d.mayor == null ? "" : MineNorth.displayName(s, d.mayor), d.electionOpen, seconds, d.candidates.size(), d.votes.size(),
-                salaries, agents, ledger, LawService.rows(d), message, ok, Etat.wealthPercent(s), EtatConfig.get().impot_compte_max_pourcent));
+                salaries, agents, ledger, LawService.rows(d), message, ok, Etat.wealthPercent(s), EtatConfig.get().impot_compte_max_pourcent,
+                Etat.salaryTaxPercent(s), EtatConfig.get().impot_salaire_max_pourcent));
     }
 
     /** Traite une action de la tablette ; le résultat repart vers le joueur avec l'état à jour. */
@@ -99,6 +100,21 @@ public final class TabletService {
                         d.log("Impôt sur le compte fixé à " + Etat.percent(v) + " par " + who);
                         d.setDirty();
                         done = "Impôt sur le compte fixé à " + Etat.percent(v) + ".";
+                    }
+                }
+            }
+            case "stax" -> {
+                if (!mayor) error = "Réservé au maire.";
+                else {
+                    double v = parseDouble(a);
+                    double max = EtatConfig.get().impot_salaire_max_pourcent;
+                    if (Double.isNaN(v) || v < 0 || v > 100) error = "Taux invalide (0 à 100 %).";
+                    else if (v > max && !p.hasPermissions(2)) error = "Le maximum autorisé est " + Etat.percent(max) + ".";
+                    else {
+                        d.salaryTaxOverride = v;
+                        d.log("Impôt sur le salaire fixé à " + Etat.percent(v) + " par " + who);
+                        d.setDirty();
+                        done = "Impôt sur le salaire fixé à " + Etat.percent(v) + ".";
                     }
                 }
             }
