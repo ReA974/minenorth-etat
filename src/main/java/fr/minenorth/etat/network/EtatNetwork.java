@@ -28,7 +28,7 @@ public final class EtatNetwork {
     private EtatNetwork() {}
 
     public static final int A_REFRESH = 0, A_CANDIDATE = 1, A_WITHDRAW = 2, A_VOTE = 3, A_CLOSE = 4;
-    private static final String PROTOCOL = "3";
+    private static final String PROTOCOL = "4";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(MineNorthEtat.MOD_ID, "network"), () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
     private static int id = 0;
@@ -43,6 +43,7 @@ public final class EtatNetwork {
         CHANNEL.registerMessage(id++, TabletAction.class, TabletAction::encode, TabletAction::decode, TabletAction::handle, java.util.Optional.of(net.minecraftforge.network.NetworkDirection.PLAY_TO_SERVER));
         CHANNEL.registerMessage(id++, LawsPacket.class, LawsPacket::encode, LawsPacket::decode, LawsPacket::handle, java.util.Optional.of(net.minecraftforge.network.NetworkDirection.PLAY_TO_CLIENT));
         CHANNEL.registerMessage(id++, LawTitlesPacket.class, LawTitlesPacket::encode, LawTitlesPacket::decode, LawTitlesPacket::handle, java.util.Optional.of(net.minecraftforge.network.NetworkDirection.PLAY_TO_CLIENT));
+        id = PhoneNet.register(CHANNEL, id);   // application « téléphone » (état + ouverture)
     }
 
     /** Ouvre l'écran du bureau de vote chez ce joueur. */
