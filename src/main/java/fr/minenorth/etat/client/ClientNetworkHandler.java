@@ -10,6 +10,7 @@ public final class ClientNetworkHandler {
     public static void tablet(EtatNetwork.TabletState p) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen instanceof TabletScreen screen) screen.update(p);
+        else if (PhoneAppClient.phone() && fr.minenorth.etat.client.phone.PhoneMairie.handle(p)) return;
         else mc.setScreen(new TabletScreen(p));
     }
 
